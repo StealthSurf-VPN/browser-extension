@@ -4,7 +4,7 @@ Cross-browser extension for connecting to proxies via [StealthSurf VPN](https://
 
 ## Features
 
-- One-click proxy connection with auto-configuration (HTTP and SOCKS5)
+- One-click proxy connection with auto-configuration (HTTP)
 - All service types: configs, paid options, cloud servers
 - Split tunneling — route only selected sites through proxy (or exclude specific sites)
 - Location switching with real-time ping measurement
@@ -132,7 +132,7 @@ For installs outside Chrome Web Store / Firefox AMO:
 ### Proxy Connection
 
 1. User clicks "Connect" on a config
-2. Proxy subconfig auto-created if missing (supports HTTP and SOCKS5)
+2. Proxy subconfig auto-created if missing (supports HTTP)
 3. Credentials parsed from connection URL `protocol://user:pass@host:port`
 4. Background applies proxy via PAC script (Chrome) or `onRequest` listener (Firefox)
 5. Extension badge shows country code of exit IP

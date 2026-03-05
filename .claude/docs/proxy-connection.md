@@ -16,12 +16,11 @@
    e. Send PROXY_CONNECT to background with credentials + protocol + configMeta
 3. Background (proxyManager.connect):
    Chrome: builds PAC script with split tunnel rules
-           → uses PROXY or SOCKS5 directive based on protocol
+           → uses PROXY directive
            → chrome.proxy.settings.set()
            + registers onAuthRequired listener (retry limit: 2 per requestId)
    Firefox: registers proxy.onRequest listener
-            → uses type "socks" (SOCKS v5) or "http" based on protocol
-            → proxyDNS: true for SOCKS5
+            → uses http
 4. Background persists state (including protocol) to chrome.storage.local
 5. Badge set to country code of exit IP (via popup UPDATE_BADGE message)
 6. Popup updates proxyAtom state
@@ -99,11 +98,10 @@ parseConnectionUrl("http://user:pass@1.2.3.4:1080")
 
 ## Protocol Support
 
-Both HTTP and SOCKS5 proxies are supported:
+HTTP proxy protocol is used:
 
-- Protocol determined by config's `protocol` field
-- Chrome: PAC script uses `PROXY` (HTTP) or `SOCKS5` directive
-- Firefox: proxy.onRequest returns `type: "http"` or `type: "socks"` (SOCKS v5) + `proxyDNS: true`
+- Chrome: PAC script uses `PROXY` directive
+- Firefox: proxy.onRequest returns `type: "http"`
 - Protocol persisted in `proxy_state` for service worker restart
 
 ## Error Handling

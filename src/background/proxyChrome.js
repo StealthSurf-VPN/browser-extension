@@ -132,14 +132,7 @@ const buildDomainCheck = (domain, result) => {
  * @param {string[]} domains - Domain patterns for split tunneling
  * @returns {string} PAC script source code
  */
-const buildPacScript = (
-	host,
-	port,
-	internalHosts,
-	mode,
-	domains,
-	protocol = "http",
-) => {
+const buildPacScript = (host, port, internalHosts, mode, domains) => {
 	const safeHost = sanitizeHost(host);
 
 	if (!safeHost) throw new Error("Invalid proxy host");
@@ -148,9 +141,7 @@ const buildPacScript = (
 
 	if (!safePort) throw new Error("Invalid proxy port");
 
-	const proxyDirective = protocol === "socks5" ? "SOCKS5" : "PROXY";
-
-	const proxyStr = `${proxyDirective} ${safeHost}:${safePort}`;
+	const proxyStr = `PROXY ${safeHost}:${safePort}`;
 
 	const internalChecks = internalHosts
 		.map((h) => {
@@ -202,7 +193,6 @@ export const connectChrome = async (
 		internalHosts,
 		mode,
 		domains,
-		protocol,
 	);
 
 	const proxyConfig = {

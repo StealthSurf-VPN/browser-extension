@@ -4,7 +4,7 @@ Guide for AI assistants working with the StealthSurf Browser Extension codebase.
 
 ## Project Overview
 
-Cross-browser extension (Chrome MV3, Firefox MV2) for connecting to proxies via StealthSurf VPN. Displays user's configs, paid options, and cloud server proxies. Supports one-click proxy connection (HTTP and SOCKS5), location changes, split tunneling, and auto-update checking.
+Cross-browser extension (Chrome MV3, Firefox MV2) for connecting to proxies via StealthSurf VPN. Displays user's configs, paid options, and cloud server proxies. Supports one-click proxy connection (HTTP), location changes, split tunneling, and auto-update checking.
 
 ## Tech Stack
 
@@ -132,7 +132,7 @@ Manages proxy connections and auth tokens. Persists state in `chrome.storage.loc
 | Chrome | PAC script via `chrome.proxy.settings` | `onAuthRequired` listener (retry limit: 2 per requestId) | PAC `FindProxyForURL` logic |
 | Firefox | `browser.proxy.onRequest` listener | Inline in return value | Domain matching in listener |
 
-**Protocol support**: Both HTTP and SOCKS5. PAC script uses `SOCKS5` directive for SOCKS5 protocol; Firefox uses `type: "socks"` (which is SOCKS v5 per MDN) with `proxyDNS: true`.
+**Protocol support**: HTTP.
 
 **Chrome PAC script** (`proxyChrome.js`):
 
@@ -199,7 +199,7 @@ activePage: "main" | "configSelect" | "locationSelect" | "settings" | "splitTunn
   locationId,          // Virtual/smart location ID
   locationRealId,      // Physical server location ID (for ping)
   locationTitle,       // Location display name
-  protocol,            // Connection protocol ("http" or "socks5")
+  protocol,            // Connection protocol ("http")
   hasProxy,            // Whether proxy subconfig exists
   proxyUrl,            // protocol://user:pass@host:port (null if not yet created)
   expiresAt,           // Expiration Unix timestamp (seconds)

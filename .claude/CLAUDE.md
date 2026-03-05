@@ -71,7 +71,6 @@ npm run release          # Full release (build + package)
 
 - Chrome uses PAC script via `chrome.proxy.settings` + `onAuthRequired`
 - Firefox uses `browser.proxy.onRequest` with inline auth
-- SOCKS5: Chrome PAC uses `SOCKS5` directive; Firefox uses `type: "socks"` (= SOCKS v5) + `proxyDNS: true`
 - Split tunneling: PAC `FindProxyForURL` (Chrome) vs domain matching in listener (Firefox)
 - Always test changes against both `proxyChrome.js` and `proxyFirefox.js`
 - Background service worker in Chrome MV3 is ephemeral — persist state in `chrome.storage.local`

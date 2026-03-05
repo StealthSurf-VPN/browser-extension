@@ -132,12 +132,11 @@ export const reapplyFirefox = async () => {
 			};
 
 			proxyResult = {
-				type: protocol === "socks5" ? "socks" : "http",
+				type: "http",
 				host: state.host,
 				port: Number(state.port),
 				username: state.user,
 				password: state.pass,
-				...(protocol === "socks5" ? { proxyDNS: true } : {}),
 			};
 		} else {
 			return;
@@ -165,12 +164,11 @@ export const connectFirefox = async (
 	proxyConfig = { host, port, user, pass };
 
 	proxyResult = {
-		type: protocol === "socks5" ? "socks" : "http",
+		type: "http",
 		host: proxyConfig.host,
 		port: Number(proxyConfig.port),
 		username: proxyConfig.user,
 		password: proxyConfig.pass,
-		...(protocol === "socks5" ? { proxyDNS: true } : {}),
 	};
 
 	if (!browser.proxy.onRequest.hasListener(proxyRequestListener)) {

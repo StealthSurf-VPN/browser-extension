@@ -70,7 +70,7 @@ chrome.proxy.settings.clear({ scope: "regular" })
 
 `buildPacScript()` generates `FindProxyForURL` with:
 
-- `PROXY host:port` (HTTP) or `SOCKS5 host:port` (SOCKS5) directive
+- `PROXY host:port` (HTTP)
 - Internal hosts (API/console) always DIRECT
 - `exclude` mode: listed domains DIRECT, rest proxied
 - `include` mode: listed domains proxied, rest DIRECT
@@ -88,10 +88,7 @@ browser.proxy.onRequest.addListener(proxyRequestListener, { urls: ["<all_urls>"]
 // 2. Split tunnel domains → DIRECT or PROXY based on mode
 // 3. Default → PROXY
 
-// Return value for SOCKS5:
-{ type: "socks", host, port, username, password, proxyDNS: true }
-
-// Return value for HTTP:
+// Return value:
 { type: "http", host, port, username, password }
 ```
 

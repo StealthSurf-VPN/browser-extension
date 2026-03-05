@@ -66,7 +66,7 @@ createCloudServerProxy(serverId, { protocol: "http" })
 
 All return `connection_url` in format: `protocol://user:pass@host:port`
 
-Protocol is determined by the config (HTTP or SOCKS5).
+Protocol is determined by the config (HTTP).
 
 ## Location Change
 

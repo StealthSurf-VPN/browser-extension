@@ -117,8 +117,6 @@ const useProxyList = () => {
 			if (!server.proxies) continue;
 
 			for (const proxy of server.proxies) {
-				if (proxy.protocol !== "socks5") continue;
-
 				items.push({
 					id: proxy.id,
 					title: proxy.title ?? null,
@@ -127,7 +125,7 @@ const useProxyList = () => {
 					locationRealId: server.location_id,
 					locationTitle: getLocationTitle(server.location_id),
 					locationCode: getLocationCode(server.location_id),
-					protocol: "socks5",
+					protocol: proxy.protocol || "http",
 					hasProxy: true,
 					proxyUrl: proxy.connection_url,
 					serverId: server.id,
