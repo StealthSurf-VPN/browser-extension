@@ -15,7 +15,11 @@ const parseConnectionUrl = (connectionUrl) => {
 	}
 
 	try {
-		const url = new URL(connectionUrl);
+		const normalized = connectionUrl.includes("://")
+			? connectionUrl
+			: `http://${connectionUrl}`;
+
+		const url = new URL(normalized);
 
 		return {
 			host: url.hostname || "",
