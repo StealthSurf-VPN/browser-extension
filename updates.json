@@ -3,8 +3,8 @@
 		"extension@stealthsurf.app": {
 			"updates": [
 				{
-					"version": "1.0.5",
-					"update_link": "https://github.com/stealthsurf-vpn/browser-extension/releases/download/v1.0.5/stealthsurf-firefox-v1.0.5.xpi"
+					"version": "1.0.6",
+					"update_link": "https://github.com/stealthsurf-vpn/browser-extension/releases/download/v1.0.6/stealthsurf-firefox-v1.0.6.xpi"
 				}
 			]
 		}

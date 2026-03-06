@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "StealthSurf VPN",
 	"short_name": "StealthSurf",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "Браузерное расширение для пользователей сервиса. Подключайтесь к своим конфигам прямо из браузера — без лишних настроек.",
 	"author": "StealthSurf VPN",
 	"homepage_url": "https://stealthsurf.app",

@@ -85,7 +85,7 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 
 	const showSnackbar = useSnackbarHandler();
 
-	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.5";
+	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.6";
 
 	const [proxyAllTraffic, setProxyAllTraffic] = useState(false);
 

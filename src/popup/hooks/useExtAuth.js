@@ -39,6 +39,7 @@ const useExtAuth = () => {
 
 	const openLogin = async () => {
 		await sendMessage({ type: MSG.AUTH_LOGIN });
+		window.close();
 	};
 
 	useEffect(() => {
