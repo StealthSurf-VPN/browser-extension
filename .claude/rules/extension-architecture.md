@@ -49,7 +49,7 @@ Defined in `src/shared/constants.js`:
 
 ### Chrome (`proxyChrome.js`)
 
-Uses PAC script for split tunneling and protocol support:
+Uses PAC script for split tunneling (HTTP only, no SOCKS5 auth support):
 
 ```javascript
 // Connect — generates PAC script
@@ -88,11 +88,16 @@ browser.proxy.onRequest.addListener(proxyRequestListener, { urls: ["<all_urls>"]
 // 2. Split tunnel domains → DIRECT or PROXY based on mode
 // 3. Default → PROXY
 
-// Return value:
-{ type: "http", host, port, username, password }
+// Return value (SOCKS5):
+{ type: "socks", host, port, username, password, proxyDNS: true }
+
+// Return value (HTTP):
+{ type: "http", host, port, username, password, proxyAuthorizationHeader }
 ```
 
-`matchesDomain(hostname, pattern)` handles wildcards. `reapplyFirefox()` restores credentials from storage if in-memory state lost.
+`buildProxyResult()` selects proxy type based on `protocol` field. `matchesDomain(hostname, pattern)` handles wildcards. `reapplyFirefox()` restores credentials and protocol from storage if in-memory state lost.
+
+**Protocol selection**: User preference stored in `proxy_protocol` key (`"socks5"` default on Firefox). Read by `useProxyConnection` via `getProxyProtocol()`. Chrome always returns `"http"` regardless of stored value.
 
 ## Split Tunneling
 
@@ -129,6 +134,7 @@ All persistent state in `chrome.storage.local`:
 | `proxy_all_traffic` | Boolean — bypass internal hosts |
 | `split_tunnel_mode` | `"exclude"` or `"include"` |
 | `split_tunnel_domains` | `string[]` |
+| `proxy_protocol` | `"socks5"` or `"http"` (Firefox preference) |
 | `proxy_list_cache` | Cached config list |
 | `proxy_list_cache_time` | Cache timestamp |
 | `update_check_cache` | `{ timestamp, result }` |

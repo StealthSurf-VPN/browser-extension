@@ -42,7 +42,7 @@ Location picker with per-location ping measurement. Selecting a location changes
 
 ### SettingsPage
 
-User profile with ID and balance, "Proxy all traffic" toggle, useful links (Telegram, docs, status, support), legal information, version display.
+User profile with ID and balance, "Proxy all traffic" toggle, protocol selector (SOCKS5/HTTP, Firefox only, disabled while connected), useful links (Telegram, docs, status, support), legal information, version display.
 
 ### SplitTunnelPage
 
@@ -83,10 +83,11 @@ Fetches and normalizes data from three sources into a flat list:
 
 Connect/disconnect through background:
 
-1. If no proxy subconfig → auto-create
-2. Parse connection URL → extract credentials
-3. Send `PROXY_CONNECT` to background
-4. Background applies proxy settings
+1. Read protocol preference via `getProxyProtocol()` (SOCKS5 default on Firefox, HTTP on Chrome)
+2. If no proxy subconfig → auto-create with selected protocol
+3. Parse connection URL → extract credentials
+4. Send `PROXY_CONNECT` to background with protocol
+5. Background applies proxy settings (Firefox: `type: "socks"` or `type: "http"`, Chrome: always HTTP PAC)
 
 ### useLoadResources
 

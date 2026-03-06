@@ -30,18 +30,18 @@ npm run release          # Full release (build + package)
 - `src/background/index.js` — Service worker entry (ensureInit pattern)
 - `src/background/proxyManager.js` — Cross-browser proxy abstraction
 - `src/background/proxyChrome.js` — PAC script generation + onAuthRequired (retry limit)
-- `src/background/proxyFirefox.js` — proxy.onRequest with domain filtering
+- `src/background/proxyFirefox.js` — proxy.onRequest with domain filtering (SOCKS5 + HTTP via `buildProxyResult`)
 - `src/background/authManager.js` — PKCE OAuth code exchange + token management
 - `src/background/messageHandler.js` — Message dispatcher with sender.id validation
 - `src/popup/App.jsx` — Root component with VK UI providers
 - `src/popup/pages/MainPage.jsx` — Power toggle, IP badge, config selector, update banner
 - `src/popup/pages/ConfigSelectPage.jsx` — Full config list with ping
 - `src/popup/pages/LocationSelectPage.jsx` — Location picker with ping
-- `src/popup/pages/SettingsPage.jsx` — Profile and settings
+- `src/popup/pages/SettingsPage.jsx` — Profile, settings, protocol selector (SOCKS5/HTTP, Firefox only)
 - `src/popup/pages/SplitTunnelPage.jsx` — Domain-based split tunneling
 - `src/popup/pages/AuthPage.jsx` — PKCE OAuth login
 - `src/popup/components/ErrorBoundary.jsx` — Error boundary with key-based remount
-- `src/popup/hooks/useProxyConnection.js` — Connect/disconnect with credential validation
+- `src/popup/hooks/useProxyConnection.js` — Connect/disconnect with credential validation + protocol from storage
 - `src/popup/hooks/useProxyList.js` — Data fetching and normalization
 - `src/popup/hooks/useLoadResources.js` — Parallel data loading with retry
 - `src/popup/hooks/useExtAuth.js` — Auth check via storage listener
@@ -69,8 +69,8 @@ npm run release          # Full release (build + package)
 
 ### 3. Cross-Browser Awareness
 
-- Chrome uses PAC script via `chrome.proxy.settings` + `onAuthRequired`
-- Firefox uses `browser.proxy.onRequest` with inline auth
+- Chrome uses PAC script via `chrome.proxy.settings` + `onAuthRequired` (HTTP only)
+- Firefox uses `browser.proxy.onRequest` with inline auth (SOCKS5 default, HTTP optional)
 - Split tunneling: PAC `FindProxyForURL` (Chrome) vs domain matching in listener (Firefox)
 - Always test changes against both `proxyChrome.js` and `proxyFirefox.js`
 - Background service worker in Chrome MV3 is ephemeral — persist state in `chrome.storage.local`

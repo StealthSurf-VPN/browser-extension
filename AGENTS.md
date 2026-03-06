@@ -4,7 +4,7 @@ Guide for AI assistants working with the StealthSurf Browser Extension codebase.
 
 ## Project Overview
 
-Cross-browser extension (Chrome MV3, Firefox MV2) for connecting to proxies via StealthSurf VPN. Displays user's configs, paid options, and cloud server proxies. Supports one-click proxy connection (HTTP), location changes, split tunneling, and auto-update checking.
+Cross-browser extension (Chrome MV3, Firefox MV2) for connecting to proxies via StealthSurf VPN. Displays user's configs, paid options, and cloud server proxies. Supports one-click proxy connection (SOCKS5 on Firefox, HTTP on Chrome), location changes, split tunneling, and auto-update checking.
 
 ## Tech Stack
 
@@ -132,7 +132,7 @@ Manages proxy connections and auth tokens. Persists state in `chrome.storage.loc
 | Chrome | PAC script via `chrome.proxy.settings` | `onAuthRequired` listener (retry limit: 2 per requestId) | PAC `FindProxyForURL` logic |
 | Firefox | `browser.proxy.onRequest` listener | Inline in return value | Domain matching in listener |
 
-**Protocol support**: HTTP.
+**Protocol support**: SOCKS5 (Firefox, default) and HTTP (Chrome-only, or user choice on Firefox). Chrome cannot support authenticated SOCKS5 due to extension API limitations (`onAuthRequired` only handles HTTP 407). Protocol preference stored in `chrome.storage.local` (`proxy_protocol` key).
 
 **Chrome PAC script** (`proxyChrome.js`):
 
@@ -146,9 +146,10 @@ Manages proxy connections and auth tokens. Persists state in `chrome.storage.loc
 
 **Firefox** (`proxyFirefox.js`):
 
+- `buildProxyResult()` — returns `{ type: "socks", proxyDNS: true }` for SOCKS5 or `{ type: "http", proxyAuthorizationHeader }` for HTTP
 - `matchesDomain(hostname, pattern)` helper for domain matching
 - `proxyRequestListener` checks split tunnel rules before routing
-- `reapplyFirefox()` restores credentials from storage if in-memory state lost
+- `reapplyFirefox()` restores credentials and protocol from storage if in-memory state lost
 
 ### Split Tunneling
 
@@ -175,7 +176,7 @@ activePage: "main" | "configSelect" | "locationSelect" | "settings" | "splitTunn
 
 **LocationSelectPage** — location picker with ping measurement.
 
-**SettingsPage** — user profile, proxy settings toggle, useful links, legal info.
+**SettingsPage** — user profile, proxy settings toggle, protocol selector (SOCKS5/HTTP, Firefox only, disabled while connected), useful links, legal info.
 
 **SplitTunnelPage** — domain list editor with exclude/include mode switcher. Supports wildcards (`*.example.com`). Auto-strips protocols from pasted URLs.
 
@@ -199,7 +200,7 @@ activePage: "main" | "configSelect" | "locationSelect" | "settings" | "splitTunn
   locationId,          // Virtual/smart location ID
   locationRealId,      // Physical server location ID (for ping)
   locationTitle,       // Location display name
-  protocol,            // Connection protocol ("http")
+  protocol,            // Connection protocol ("socks5" or "http")
   hasProxy,            // Whether proxy subconfig exists
   proxyUrl,            // protocol://user:pass@host:port (null if not yet created)
   expiresAt,           // Expiration Unix timestamp (seconds)
@@ -289,5 +290,6 @@ All persistent state in `chrome.storage.local`:
 | `proxy_list_cache` | Cached config list |
 | `proxy_list_cache_time` | Cache timestamp |
 | `update_check_cache` | `{ timestamp, result }` |
+| `proxy_protocol` | `"socks5"` or `"http"` (Firefox preference) |
 | `oauth_code_verifier` | PKCE code_verifier (Firefox, temporary) |
 | `oauth_redirect_uri` | OAuth redirect URI (Firefox, temporary) |

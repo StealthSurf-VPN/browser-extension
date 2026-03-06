@@ -4,7 +4,7 @@ Cross-browser extension for connecting to proxies via [StealthSurf VPN](https://
 
 ## Features
 
-- One-click proxy connection with auto-configuration (HTTP)
+- One-click proxy connection with auto-configuration (SOCKS5 / HTTP)
 - All service types: configs, paid options, cloud servers
 - Split tunneling — route only selected sites through proxy (or exclude specific sites)
 - Location switching with real-time ping measurement
@@ -17,8 +17,8 @@ Cross-browser extension for connecting to proxies via [StealthSurf VPN](https://
 
 | Browser | Manifest | Proxy API | Status |
 | ------- | -------- | --------- | ------ |
-| Chrome | V3 | PAC script + `onAuthRequired` | ✅ |
-| Firefox | V2 | `proxy.onRequest` listener | ✅ |
+| Chrome | V3 | PAC script + `onAuthRequired` (HTTP only) | ✅ |
+| Firefox | V2 | `proxy.onRequest` listener (SOCKS5 + HTTP) | ✅ |
 
 ## Getting Started
 
@@ -84,7 +84,7 @@ Manages proxy connections and auth tokens. State persists in `chrome.storage.loc
 - **index.js** — entry point with `ensureInit()` pattern (retryable initialization)
 - **proxyManager.js** — cross-browser proxy abstraction
 - **proxyChrome.js** — PAC script generation + `onAuthRequired` with retry limit (2 per requestId)
-- **proxyFirefox.js** — `browser.proxy.onRequest` with inline credentials
+- **proxyFirefox.js** — `browser.proxy.onRequest` with inline credentials (SOCKS5 + HTTP)
 - **authManager.js** — PKCE OAuth with code exchange + auto-refresh via `chrome.alarms`
 - **messageHandler.js** — message routing popup ↔ background with `sender.id` validation
 
@@ -97,7 +97,7 @@ Compact React app (380×520px) with VK UI. State-based navigation via Recoil.
 | MainPage | Power toggle, connection status, IP badge, config selector, update banner |
 | ConfigSelectPage | All configs with connect buttons and per-location ping |
 | LocationSelectPage | Location picker with ping measurement |
-| SettingsPage | Profile, proxy settings, useful links |
+| SettingsPage | Profile, proxy settings, protocol selector (Firefox), useful links |
 | SplitTunnelPage | Domain-based split tunneling (exclude/include modes) |
 | AuthPage | PKCE OAuth login via StealthSurf site |
 
@@ -132,8 +132,10 @@ For installs outside Chrome Web Store / Firefox AMO:
 ### Proxy Connection
 
 1. User clicks "Connect" on a config
-2. Proxy subconfig auto-created if missing (supports HTTP)
+2. Proxy subconfig auto-created if missing (SOCKS5 on Firefox, HTTP on Chrome)
 3. Credentials parsed from connection URL `protocol://user:pass@host:port`
+   - Firefox: `type: "socks"` with `proxyDNS: true` for SOCKS5, `type: "http"` for HTTP
+   - Chrome: always `PROXY host:port` via PAC script (HTTP only, no SOCKS5 auth support)
 4. Background applies proxy via PAC script (Chrome) or `onRequest` listener (Firefox)
 5. Extension badge shows country code of exit IP
 
