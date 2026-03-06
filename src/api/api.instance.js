@@ -1,6 +1,8 @@
 import axios from "axios";
-import { MSG, STORAGE_KEYS } from "../shared/constants";
+import { MSG, STORAGE_KEYS, sendMessage } from "../shared/constants";
 import getCurrentTimestamp from "../shared/getCurrentTimestamp";
+
+const storage = (globalThis.browser?.storage || chrome.storage).local;
 
 export const NETWORK = axios.create({
 	baseURL: __BACKEND_URL__,
@@ -12,7 +14,7 @@ export const NETWORK = axios.create({
 });
 
 const getStoredTokens = async () => {
-	const data = await chrome.storage.local.get([
+	const data = await storage.get([
 		STORAGE_KEYS.ACCESS_TOKEN,
 		STORAGE_KEYS.REFRESH_TOKEN,
 	]);
@@ -41,7 +43,7 @@ const doRefresh = async () => {
 
 	try {
 		const result = await Promise.race([
-			chrome.runtime.sendMessage({
+			sendMessage({
 				type: MSG.AUTH_REFRESH,
 			}),
 			new Promise((_, reject) =>

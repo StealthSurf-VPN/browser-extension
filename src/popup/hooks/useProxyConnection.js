@@ -9,11 +9,21 @@ import {
 	deletePaidOptionConfigSubconfig,
 	getPaidOptionConfigSubconfig,
 } from "../../api/routes/route.paid-options";
-import { MSG } from "../../shared/constants";
+import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import parseConnectionUrl from "../../shared/parseConnectionUrl";
 import { getProxyState } from "../state/selectors";
 
-const PROXY_PROTOCOL = "http";
+const isFirefox = typeof globalThis.browser !== "undefined";
+
+const getProxyProtocol = async () => {
+	if (!isFirefox) return "http";
+
+	const data = await (globalThis.browser?.storage || chrome.storage).local.get(
+		STORAGE_KEYS.PROXY_PROTOCOL,
+	);
+
+	return data[STORAGE_KEYS.PROXY_PROTOCOL] || "socks5";
+};
 
 /**
  * Hook for managing proxy connection lifecycle.
@@ -61,14 +71,14 @@ const useProxyConnection = () => {
 	 * @param {{ id: number, source: string, optionId?: number }} config
 	 * @returns {Promise<import("axios").AxiosResponse|null>}
 	 */
-	const createNewSubconfig = async (config) => {
+	const createNewSubconfig = async (config, proxyProtocol) => {
 		if (config.source === "config") {
-			return createSubconfig(config.id, { protocol: PROXY_PROTOCOL });
+			return createSubconfig(config.id, { protocol: proxyProtocol });
 		}
 
 		if (config.source === "paid_option") {
 			return createPaidOptionConfigSubconfig(config.optionId, config.id, {
-				protocol: PROXY_PROTOCOL,
+				protocol: proxyProtocol,
 			});
 		}
 
@@ -81,7 +91,7 @@ const useProxyConnection = () => {
 	 * @param {object} config - Normalized proxy item
 	 * @returns {Promise<string|null>} Connection URL or null on failure
 	 */
-	const ensureProxy = async (config) => {
+	const ensureProxy = async (config, proxyProtocol) => {
 		if (config.source === "cloud") {
 			return config.proxyUrl ?? null;
 		}
@@ -91,7 +101,7 @@ const useProxyConnection = () => {
 		if (subRes?.data?.status && subRes.data.data) {
 			const existing = subRes.data.data;
 
-			if (existing.protocol === PROXY_PROTOCOL) {
+			if (existing.protocol === proxyProtocol) {
 				return existing.connection_url ?? null;
 			}
 
@@ -102,7 +112,7 @@ const useProxyConnection = () => {
 			}
 		}
 
-		const createRes = await createNewSubconfig(config);
+		const createRes = await createNewSubconfig(config, proxyProtocol);
 
 		if (createRes?.data?.status) {
 			return createRes.data.data?.connection_url ?? null;
@@ -117,7 +127,9 @@ const useProxyConnection = () => {
 	 * @returns {Promise<{ success: boolean }>}
 	 */
 	const connect = async (config) => {
-		const connectionUrl = await ensureProxy(config);
+		const proxyProtocol = await getProxyProtocol();
+
+		const connectionUrl = await ensureProxy(config, proxyProtocol);
 
 		if (!connectionUrl) {
 			throw new Error("Не удалось получить прокси");
@@ -128,9 +140,9 @@ const useProxyConnection = () => {
 		if (!credentials.host || !credentials.port)
 			throw new Error("Invalid connection URL");
 
-		const response = await chrome.runtime.sendMessage({
+		const response = await sendMessage({
 			type: MSG.PROXY_CONNECT,
-			credentials: { ...credentials, protocol: config.protocol || "http" },
+			credentials: { ...credentials, protocol: proxyProtocol },
 			configMeta: {
 				id: config.id,
 				title: config.title,
@@ -164,7 +176,7 @@ const useProxyConnection = () => {
 	 * Disconnect from the current proxy.
 	 */
 	const disconnect = async () => {
-		await chrome.runtime.sendMessage({ type: MSG.PROXY_DISCONNECT });
+		await sendMessage({ type: MSG.PROXY_DISCONNECT });
 
 		setProxyState((prev) => ({
 			...prev,
@@ -182,9 +194,19 @@ const useProxyConnection = () => {
 	 * Called on popup open to sync UI with actual connection state.
 	 */
 	const restoreStatus = async () => {
-		const status = await chrome.runtime.sendMessage({
+		const storage = (globalThis.browser?.storage || chrome.storage).local;
+
+		const status = await sendMessage({
 			type: MSG.PROXY_STATUS,
 		});
+
+		let selectedConfig = null;
+
+		try {
+			const saved = await storage.get(STORAGE_KEYS.SELECTED_CONFIG);
+
+			selectedConfig = saved?.[STORAGE_KEYS.SELECTED_CONFIG] ?? null;
+		} catch {}
 
 		if (status?.connected && status.configMeta) {
 			setProxyState((prev) => ({
@@ -194,6 +216,8 @@ const useProxyConnection = () => {
 				connectedConfigTitle: status.configMeta.title,
 				connectedSource: status.configMeta.source,
 				connectedLocationId: status.configMeta.locationId,
+				selectedConfigId: selectedConfig?.id ?? null,
+				selectedSource: selectedConfig?.source ?? null,
 			}));
 		} else {
 			setProxyState((prev) => ({
@@ -203,6 +227,8 @@ const useProxyConnection = () => {
 				connectedConfigTitle: null,
 				connectedSource: null,
 				connectedLocationId: null,
+				selectedConfigId: selectedConfig?.id ?? null,
+				selectedSource: selectedConfig?.source ?? null,
 			}));
 		}
 	};

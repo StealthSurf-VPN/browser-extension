@@ -1,8 +1,49 @@
-import { STORAGE_KEYS } from "../shared/constants";
+import { STORAGE_KEYS, toBadgeCode } from "../shared/constants";
 
 let proxyConfig = null;
 let proxyResult = null;
 let bypassHosts = null;
+
+const authRetries = new Map();
+
+const authHandler = (details) => {
+	if (!proxyConfig) return {};
+
+	if (authRetries.size > 1000) authRetries.clear();
+
+	const count = authRetries.get(details.requestId) || 0;
+
+	if (count >= 2) {
+		authRetries.delete(details.requestId);
+		return { cancel: true };
+	}
+
+	authRetries.set(details.requestId, count + 1);
+
+	return {
+		authCredentials: {
+			username: proxyConfig.user,
+			password: proxyConfig.pass,
+		},
+	};
+};
+
+const buildProxyResult = ({ host, port, user, pass, protocol }) => {
+	const isSocks = protocol === "socks5";
+
+	return {
+		type: isSocks ? "socks" : "http",
+		host,
+		port: Number(port),
+		username: user,
+		password: pass,
+		...(isSocks ? { proxyDNS: true } : {}),
+		...(!isSocks
+			? { proxyAuthorizationHeader: `Basic ${btoa(`${user}:${pass}`)}` }
+			: {}),
+	};
+};
+
 let proxyAllTraffic = false;
 let splitTunnelMode = "exclude";
 let splitTunnelDomains = [];
@@ -122,22 +163,15 @@ export const reapplyFirefox = async () => {
 		const state = await getStatusFirefox();
 
 		if (state.connected && state.host) {
-			const protocol = state.protocol || "http";
-
 			proxyConfig = {
 				host: state.host,
 				port: state.port,
 				user: state.user,
 				pass: state.pass,
+				protocol: state.protocol || "http",
 			};
 
-			proxyResult = {
-				type: "http",
-				host: state.host,
-				port: Number(state.port),
-				username: state.user,
-				password: state.pass,
-			};
+			proxyResult = buildProxyResult(proxyConfig);
 		} else {
 			return;
 		}
@@ -161,20 +195,22 @@ export const connectFirefox = async (
 ) => {
 	await readSplitTunnelSettings();
 
-	proxyConfig = { host, port, user, pass };
+	proxyConfig = { host, port, user, pass, protocol };
 
-	proxyResult = {
-		type: "http",
-		host: proxyConfig.host,
-		port: Number(proxyConfig.port),
-		username: proxyConfig.user,
-		password: proxyConfig.pass,
-	};
+	proxyResult = buildProxyResult(proxyConfig);
 
 	if (!browser.proxy.onRequest.hasListener(proxyRequestListener)) {
 		browser.proxy.onRequest.addListener(proxyRequestListener, {
 			urls: ["<all_urls>"],
 		});
+	}
+
+	if (!browser.webRequest.onAuthRequired.hasListener(authHandler)) {
+		browser.webRequest.onAuthRequired.addListener(
+			authHandler,
+			{ urls: ["<all_urls>"] },
+			["blocking"],
+		);
 	}
 
 	await browser.storage.local.set({
@@ -203,6 +239,10 @@ export const disconnectFirefox = async () => {
 		browser.proxy.onRequest.removeListener(proxyRequestListener);
 	}
 
+	if (browser.webRequest.onAuthRequired.hasListener(authHandler)) {
+		browser.webRequest.onAuthRequired.removeListener(authHandler);
+	}
+
 	await browser.storage.local.set({
 		[STORAGE_KEYS.PROXY_STATE]: { connected: false },
 	});
@@ -229,7 +269,7 @@ export const restoreFirefox = async () => {
 		const data = await browser.storage.local.get(STORAGE_KEYS.CONNECTED_CONFIG);
 
 		const badgeText =
-			data[STORAGE_KEYS.CONNECTED_CONFIG]?.locationCode?.toUpperCase() || "ON";
+			toBadgeCode(data[STORAGE_KEYS.CONNECTED_CONFIG]?.locationCode) || "ON";
 
 		await connectFirefox(
 			{

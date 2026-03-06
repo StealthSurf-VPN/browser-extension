@@ -12,7 +12,7 @@ import {
 	SegmentedControl,
 } from "@vkontakte/vkui";
 import React, { useEffect, useState } from "react";
-import { MSG, STORAGE_KEYS } from "../../shared/constants";
+import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
 
 const DOMAIN_RE =
@@ -51,7 +51,7 @@ const SplitTunnelPage = ({ onBack }) => {
 	const [domainInput, setDomainInput] = useState("");
 
 	useEffect(() => {
-		chrome.storage.local
+		(globalThis.browser?.storage || chrome.storage).local
 			.get([STORAGE_KEYS.SPLIT_TUNNEL_MODE, STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS])
 			.then((data) => {
 				setSplitMode(data[STORAGE_KEYS.SPLIT_TUNNEL_MODE] || "exclude");
@@ -60,11 +60,11 @@ const SplitTunnelPage = ({ onBack }) => {
 	}, []);
 
 	const notifyBackground = () =>
-		chrome.runtime.sendMessage({ type: MSG.UPDATE_PROXY_SETTINGS });
+		sendMessage({ type: MSG.UPDATE_PROXY_SETTINGS });
 
 	const saveSplitTunnel = async (mode, domains) => {
 		try {
-			await chrome.storage.local.set({
+			await (globalThis.browser?.storage || chrome.storage).local.set({
 				[STORAGE_KEYS.SPLIT_TUNNEL_MODE]: mode,
 				[STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS]: domains,
 			});

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useRecoilState } from "recoil";
-import { MSG, STORAGE_KEYS } from "../../shared/constants";
+import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import { getIsAuthenticated, getIsLoading } from "../state/selectors";
 
 /**
@@ -16,7 +16,7 @@ const useExtAuth = () => {
 
 	const checkAuth = async () => {
 		try {
-			const result = await chrome.runtime.sendMessage({
+			const result = await sendMessage({
 				type: MSG.AUTH_GET_TOKENS,
 			});
 
@@ -33,12 +33,12 @@ const useExtAuth = () => {
 	};
 
 	const logout = async () => {
-		await chrome.runtime.sendMessage({ type: MSG.AUTH_CLEAR });
+		await sendMessage({ type: MSG.AUTH_CLEAR });
 		setIsAuthenticated(false);
 	};
 
 	const openLogin = async () => {
-		await chrome.runtime.sendMessage({ type: MSG.AUTH_LOGIN });
+		await sendMessage({ type: MSG.AUTH_LOGIN });
 	};
 
 	useEffect(() => {
@@ -56,9 +56,10 @@ const useExtAuth = () => {
 			}
 		};
 
-		chrome.storage.onChanged.addListener(listener);
+		(globalThis.browser || chrome).storage.onChanged.addListener(listener);
 
-		return () => chrome.storage.onChanged.removeListener(listener);
+		return () =>
+			(globalThis.browser || chrome).storage.onChanged.removeListener(listener);
 	}, []);
 
 	return { isAuthenticated, isLoading, logout, openLogin };

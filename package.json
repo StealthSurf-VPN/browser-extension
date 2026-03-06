@@ -1,6 +1,6 @@
 {
 	"name": "stealthsurf-extension",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "StealthSurf browser extension — HTTP proxy for Chrome and Firefox. Use your proxies, split tunneling, and more without installing VPN.",
 	"author": {
 		"name": "StealthSurf VPN",
@@ -31,8 +31,8 @@
 	"scripts": {
 		"dev:chrome": "VITE_TARGET=chrome vite build --watch",
 		"dev:firefox": "VITE_TARGET=firefox vite build --watch",
-		"build:chrome": "VITE_TARGET=chrome vite build && cp manifest/manifest.chrome.json dist/chrome/manifest.json && cp -r src/assets/icons dist/chrome/ && cp src/callback/callback.html dist/chrome/",
-		"build:firefox": "VITE_TARGET=firefox vite build && cp manifest/manifest.firefox.json dist/firefox/manifest.json && cp -r src/assets/icons dist/firefox/ && cp src/callback/callback.html dist/firefox/",
+		"build:chrome": "VITE_TARGET=chrome vite build && cp manifest/manifest.chrome.json dist/chrome/manifest.json && cp -r src/assets/icons dist/chrome/ && cp src/callback/callback.html src/callback/callback.js dist/chrome/",
+		"build:firefox": "VITE_TARGET=firefox vite build && cp manifest/manifest.firefox.json dist/firefox/manifest.json && cp -r src/assets/icons dist/firefox/ && cp src/callback/callback.html src/callback/callback.js dist/firefox/",
 		"build:all": "npm run build:chrome && npm run build:firefox",
 		"format": "biome format --write .",
 		"lint": "biome lint .",

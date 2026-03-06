@@ -145,7 +145,12 @@ const App = () => {
 		<ConfigProvider appearance={theme} platform={platform}>
 			<AppRoot>
 				<ErrorBoundary>
-					<SnackbarProvider maxSnack={3}>{renderPage()}</SnackbarProvider>
+					<SnackbarProvider
+						maxSnack={3}
+						anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+					>
+						{renderPage()}
+					</SnackbarProvider>
 					{popout}
 				</ErrorBoundary>
 			</AppRoot>

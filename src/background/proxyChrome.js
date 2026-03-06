@@ -1,4 +1,4 @@
-import { STORAGE_KEYS } from "../shared/constants";
+import { STORAGE_KEYS, toBadgeCode } from "../shared/constants";
 
 let currentCredentials = null;
 
@@ -280,7 +280,7 @@ export const reapplyChrome = async () => {
 	const data = await chrome.storage.local.get(STORAGE_KEYS.CONNECTED_CONFIG);
 
 	const badgeText =
-		data[STORAGE_KEYS.CONNECTED_CONFIG]?.locationCode?.toUpperCase() || "ON";
+		toBadgeCode(data[STORAGE_KEYS.CONNECTED_CONFIG]?.locationCode) || "ON";
 
 	await connectChrome(currentCredentials, badgeText);
 };
@@ -296,7 +296,7 @@ export const restoreChrome = async () => {
 		const data = await chrome.storage.local.get(STORAGE_KEYS.CONNECTED_CONFIG);
 
 		const badgeText =
-			data[STORAGE_KEYS.CONNECTED_CONFIG]?.locationCode?.toUpperCase() || "ON";
+			toBadgeCode(data[STORAGE_KEYS.CONNECTED_CONFIG]?.locationCode) || "ON";
 
 		await connectChrome(
 			{

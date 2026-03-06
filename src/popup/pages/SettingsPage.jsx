@@ -21,6 +21,7 @@ import {
 	Panel,
 	PanelHeader,
 	PanelHeaderBack,
+	Radio,
 	Separator,
 	SimpleCell,
 	Skeleton,
@@ -28,9 +29,11 @@ import {
 } from "@vkontakte/vkui";
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { MSG, STORAGE_KEYS } from "../../shared/constants";
+import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
-import { getProfileData } from "../state/selectors";
+import { getProfileData, getProxyState } from "../state/selectors";
+
+const isFirefox = typeof globalThis.browser !== "undefined";
 
 const usefulLinks = [
 	{
@@ -82,24 +85,45 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 
 	const showSnackbar = useSnackbarHandler();
 
-	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.3";
+	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.4";
 
 	const [proxyAllTraffic, setProxyAllTraffic] = useState(false);
 
 	useEffect(() => {
-		chrome.storage.local
+		(globalThis.browser?.storage || chrome.storage).local
 			.get(STORAGE_KEYS.PROXY_ALL_TRAFFIC)
 			.then((data) =>
 				setProxyAllTraffic(!!data[STORAGE_KEYS.PROXY_ALL_TRAFFIC]),
 			);
 	}, []);
 
+	const proxyState = useRecoilValue(getProxyState);
+
+	const [proxyProtocol, setProxyProtocol] = useState("socks5");
+
+	useEffect(() => {
+		(globalThis.browser?.storage || chrome.storage).local
+			.get(STORAGE_KEYS.PROXY_PROTOCOL)
+			.then((data) =>
+				setProxyProtocol(
+					data[STORAGE_KEYS.PROXY_PROTOCOL] || (isFirefox ? "socks5" : "http"),
+				),
+			);
+	}, []);
+
+	const handleProtocolChange = async (value) => {
+		setProxyProtocol(value);
+		await (globalThis.browser?.storage || chrome.storage).local.set({
+			[STORAGE_KEYS.PROXY_PROTOCOL]: value,
+		});
+	};
+
 	const handleProxyAllTraffic = async (checked) => {
 		setProxyAllTraffic(checked);
-		await chrome.storage.local.set({
+		await (globalThis.browser?.storage || chrome.storage).local.set({
 			[STORAGE_KEYS.PROXY_ALL_TRAFFIC]: checked,
 		});
-		await chrome.runtime.sendMessage({ type: MSG.UPDATE_PROXY_SETTINGS });
+		await sendMessage({ type: MSG.UPDATE_PROXY_SETTINGS });
 	};
 
 	const handleCopy = (text) => {
@@ -218,6 +242,54 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 							Проксировать расширение
 						</SimpleCell>
 					</Card>
+
+					{isFirefox && (
+						<>
+							<Header mode="secondary" className="ext-settings__section-header">
+								Протокол подключения
+							</Header>
+
+							<Card>
+								<SimpleCell
+									Component="label"
+									disabled={proxyState.connected}
+									after={
+										<Radio
+											name="proxy-protocol"
+											value="socks5"
+											checked={proxyProtocol === "socks5"}
+											disabled={proxyState.connected}
+											onChange={() => handleProtocolChange("socks5")}
+										/>
+									}
+									subtitle="Быстрее, работает на уровне сетевых соединений"
+									multiline
+								>
+									SOCKS5 (рекомендуется)
+								</SimpleCell>
+								<SimpleCell
+									Component="label"
+									disabled={proxyState.connected}
+									after={
+										<Radio
+											name="proxy-protocol"
+											value="http"
+											checked={proxyProtocol === "http"}
+											disabled={proxyState.connected}
+											onChange={() => handleProtocolChange("http")}
+										/>
+									}
+									subtitle="Максимальная совместимость с сайтами"
+									multiline
+								>
+									HTTP
+								</SimpleCell>
+								{proxyState.connected && (
+									<Footer>Отключитесь для смены протокола</Footer>
+								)}
+							</Card>
+						</>
+					)}
 
 					<Header mode="secondary" className="ext-settings__section-header">
 						Полезные ссылки

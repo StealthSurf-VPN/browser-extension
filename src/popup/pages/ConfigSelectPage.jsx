@@ -13,6 +13,7 @@ import {
 } from "@vkontakte/vkui";
 import React, { useEffect, useRef } from "react";
 import { useRecoilState } from "recoil";
+import { STORAGE_KEYS } from "../../shared/constants";
 import countryCodeToEmoji from "../../shared/countryFlag";
 import getPingLabel from "../../shared/getPingLabel";
 import localizeDate from "../../shared/localizeDate";
@@ -87,6 +88,12 @@ const ConfigSelectPage = ({ locations, loading, error, reload, onBack }) => {
 			selectedConfigId: item.id,
 			selectedSource: item.source,
 		}));
+		(globalThis.browser?.storage || chrome.storage).local.set({
+			[STORAGE_KEYS.SELECTED_CONFIG]: {
+				id: item.id,
+				source: item.source,
+			},
+		});
 		onBack();
 	};
 

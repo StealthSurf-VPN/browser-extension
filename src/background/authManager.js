@@ -4,14 +4,16 @@ import { generateCodeChallenge, generateCodeVerifier } from "../shared/pkce";
 
 const isFirefox = typeof globalThis.browser?.runtime?.getURL === "function";
 
+const storage = (globalThis.browser?.storage || chrome.storage).local;
+
 const backendUrl = __BACKEND_URL__.replace(/\/+$/, "") + "/";
 
 /**
- * Read access and refresh tokens from chrome.storage.local.
+ * Read access and refresh tokens from storage.
  * @returns {Promise<{ accessToken: object|null, refreshToken: object|null }>}
  */
 export const getTokens = async () => {
-	const data = await chrome.storage.local.get([
+	const data = await storage.get([
 		STORAGE_KEYS.ACCESS_TOKEN,
 		STORAGE_KEYS.REFRESH_TOKEN,
 	]);
@@ -23,12 +25,12 @@ export const getTokens = async () => {
 };
 
 /**
- * Save access and refresh tokens to chrome.storage.local.
+ * Save access and refresh tokens to storage.
  * @param {{ token: string, expires_at: number }} accessToken
  * @param {{ token: string, expires_at: number }} refreshToken
  */
 export const setTokens = async (accessToken, refreshToken) => {
-	await chrome.storage.local.set({
+	await storage.set({
 		[STORAGE_KEYS.ACCESS_TOKEN]: accessToken,
 		[STORAGE_KEYS.REFRESH_TOKEN]: refreshToken,
 	});
@@ -38,10 +40,7 @@ export const setTokens = async (accessToken, refreshToken) => {
  * Remove all auth tokens from storage.
  */
 export const clearTokens = async () => {
-	await chrome.storage.local.remove([
-		STORAGE_KEYS.ACCESS_TOKEN,
-		STORAGE_KEYS.REFRESH_TOKEN,
-	]);
+	await storage.remove([STORAGE_KEYS.ACCESS_TOKEN, STORAGE_KEYS.REFRESH_TOKEN]);
 };
 
 let refreshPromise = null;
@@ -110,7 +109,7 @@ const doRefreshAccessToken = async () => {
  * @returns {string} Redirect URI
  */
 const getRedirectUri = () => {
-	if (isFirefox) return `moz-extension://${browser.runtime.id}/callback`;
+	if (isFirefox) return browser.runtime.getURL("callback.html");
 
 	return chrome.identity.getRedirectURL();
 };
@@ -246,7 +245,7 @@ const startChromeOAuth = (authUrl, redirectUri, codeVerifier) =>
  * @returns {Promise<{ success: boolean, pending: boolean }>}
  */
 const startFirefoxOAuth = async (authUrl, codeVerifier, redirectUri) => {
-	await chrome.storage.local.set({
+	await storage.set({
 		[STORAGE_KEYS.OAUTH_CODE_VERIFIER]: codeVerifier,
 		[STORAGE_KEYS.OAUTH_REDIRECT_URI]: redirectUri,
 	});
@@ -300,7 +299,7 @@ export const startOAuthFlow = async () => {
  * @returns {Promise<{ success: boolean }>}
  */
 export const completeFirefoxOAuth = async (code) => {
-	const data = await chrome.storage.local.get([
+	const data = await storage.get([
 		STORAGE_KEYS.OAUTH_CODE_VERIFIER,
 		STORAGE_KEYS.OAUTH_REDIRECT_URI,
 	]);
@@ -318,7 +317,7 @@ export const completeFirefoxOAuth = async (code) => {
 
 		return { success: true };
 	} finally {
-		await chrome.storage.local.remove([
+		await storage.remove([
 			STORAGE_KEYS.OAUTH_CODE_VERIFIER,
 			STORAGE_KEYS.OAUTH_REDIRECT_URI,
 		]);

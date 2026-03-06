@@ -24,9 +24,22 @@ export const STORAGE_KEYS = {
 	PROXY_ALL_TRAFFIC: "proxy_all_traffic",
 	SPLIT_TUNNEL_MODE: "split_tunnel_mode",
 	SPLIT_TUNNEL_DOMAINS: "split_tunnel_domains",
+	PROXY_PROTOCOL: "proxy_protocol",
 	OAUTH_CODE_VERIFIER: "oauth_code_verifier",
 	OAUTH_REDIRECT_URI: "oauth_redirect_uri",
 	UPDATE_CHECK_CACHE: "update_check_cache",
+	SELECTED_CONFIG: "selected_config",
 };
 
 export const CACHE_TTL_MS = 5 * 60 * 1000;
+
+export const sendMessage = (msg) =>
+	(globalThis.browser || chrome).runtime.sendMessage(msg);
+
+export const toBadgeCode = (code) => {
+	const upper = (code || "").toUpperCase();
+
+	if (upper === "RB") return "RU";
+
+	return upper;
+};

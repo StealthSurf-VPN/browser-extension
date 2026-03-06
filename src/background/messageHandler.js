@@ -1,4 +1,4 @@
-import { MSG, STORAGE_KEYS } from "../shared/constants";
+import { MSG, STORAGE_KEYS, toBadgeCode } from "../shared/constants";
 import {
 	clearTokens,
 	completeFirefoxOAuth,
@@ -15,6 +15,8 @@ import {
 	updateBadge,
 } from "./proxyManager";
 
+const storage = (globalThis.browser?.storage || chrome.storage).local;
+
 const handlers = {
 	[MSG.PROXY_CONNECT]: async (msg) => {
 		if (!msg.credentials?.host || !msg.credentials?.port) {
@@ -29,12 +31,12 @@ const handlers = {
 			return { error: "Invalid credentials: user and pass must be strings" };
 		}
 
-		const badgeText = msg.configMeta?.locationCode?.toUpperCase() || "ON";
+		const badgeText = toBadgeCode(msg.configMeta?.locationCode) || "ON";
 
 		await connect(msg.credentials, badgeText);
 
 		if (msg.configMeta) {
-			await chrome.storage.local.set({
+			await storage.set({
 				[STORAGE_KEYS.CONNECTED_CONFIG]: msg.configMeta,
 			});
 		}
@@ -45,7 +47,7 @@ const handlers = {
 	[MSG.PROXY_DISCONNECT]: async () => {
 		await disconnect();
 
-		await chrome.storage.local.remove(STORAGE_KEYS.CONNECTED_CONFIG);
+		await storage.remove(STORAGE_KEYS.CONNECTED_CONFIG);
 
 		return { success: true };
 	},
@@ -53,7 +55,7 @@ const handlers = {
 	[MSG.PROXY_STATUS]: async () => {
 		const proxyState = await getStatus();
 
-		const data = await chrome.storage.local.get(STORAGE_KEYS.CONNECTED_CONFIG);
+		const data = await storage.get(STORAGE_KEYS.CONNECTED_CONFIG);
 
 		return {
 			connected: proxyState.connected,
@@ -81,7 +83,7 @@ const handlers = {
 	[MSG.AUTH_CLEAR]: async () => {
 		await clearTokens();
 		await disconnect();
-		await chrome.storage.local.remove(STORAGE_KEYS.CONNECTED_CONFIG);
+		await storage.remove(STORAGE_KEYS.CONNECTED_CONFIG);
 		return { success: true };
 	},
 

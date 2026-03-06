@@ -7,7 +7,7 @@ import {
 import { IconButton, Separator, SimpleCell, Spinner } from "@vkontakte/vkui";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRecoilState } from "recoil";
-import { MSG } from "../../shared/constants";
+import { MSG, sendMessage, toBadgeCode } from "../../shared/constants";
 import countryCodeToEmoji from "../../shared/countryFlag";
 import getPingLabel from "../../shared/getPingLabel";
 import localizeDate from "../../shared/localizeDate";
@@ -139,9 +139,9 @@ const MainPage = ({
 					if (result) {
 						setExternalIp(result);
 						if (result.countryCode) {
-							chrome.runtime.sendMessage({
+							sendMessage({
 								type: MSG.UPDATE_BADGE,
-								text: result.countryCode.toUpperCase(),
+								text: toBadgeCode(result.countryCode),
 							});
 						}
 					} else {
