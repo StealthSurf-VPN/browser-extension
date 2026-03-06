@@ -23,6 +23,7 @@ export default ({ mode }) => {
 			__CONSOLE_URL__: JSON.stringify(env.VITE_CONSOLE_URL),
 		},
 		build: {
+			chunkSizeWarningLimit: Infinity,
 			outDir: `dist/${target}`,
 			emptyOutDir: true,
 			rollupOptions: {
