@@ -209,7 +209,8 @@ const startChromeOAuth = (authUrl, redirectUri, codeVerifier) =>
 
 					const code = url.searchParams.get("code");
 
-					if (!code) throw new Error("No auth code in response");
+					if (!code || typeof code !== "string" || code.length > 2048)
+						throw new Error("Invalid auth code");
 
 					const tokens = await exchangeCode(code, codeVerifier, redirectUri);
 

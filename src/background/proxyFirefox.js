@@ -7,7 +7,7 @@ let bypassHosts = null;
 const authRetries = new Map();
 
 const authHandler = (details) => {
-	if (!proxyConfig) return {};
+	if (!proxyConfig) return { cancel: true };
 
 	if (authRetries.size > 1000) authRetries.clear();
 
@@ -39,7 +39,9 @@ const buildProxyResult = ({ host, port, user, pass, protocol }) => {
 		password: pass,
 		...(isSocks ? { proxyDNS: true } : {}),
 		...(!isSocks
-			? { proxyAuthorizationHeader: `Basic ${btoa(`${user}:${pass}`)}` }
+			? {
+					proxyAuthorizationHeader: `Basic ${btoa(unescape(encodeURIComponent(`${user}:${pass}`)))}`,
+				}
 			: {}),
 	};
 };
