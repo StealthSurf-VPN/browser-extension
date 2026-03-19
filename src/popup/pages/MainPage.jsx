@@ -266,7 +266,7 @@ const MainPage = ({
 
 	const pingLabel = getPingLabel(ping);
 
-	const showConfigureButton = displayConfig && displayConfig.source !== "cloud";
+	const showConfigureButton = displayConfig?.canChangeLocation;
 
 	return (
 		<div className="ext-main">

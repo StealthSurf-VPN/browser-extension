@@ -33,6 +33,10 @@ export const STORAGE_KEYS = {
 
 export const CACHE_TTL_MS = 5 * 60 * 1000;
 
+export const DEFAULT_GAMING_LOCATION_ID = 18;
+
+export const DEFAULT_GAMING_TITLE = "Игровой белый интернет";
+
 export const sendMessage = (msg) =>
 	(globalThis.browser || chrome).runtime.sendMessage(msg);
 

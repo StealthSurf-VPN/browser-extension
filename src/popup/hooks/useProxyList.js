@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { useRecoilValue } from "recoil";
 import {
+	DEFAULT_GAMING_LOCATION_ID,
+	DEFAULT_GAMING_TITLE,
+} from "../../shared/constants";
+import {
 	getCloudServers,
 	getConfigs,
 	getLocations,
@@ -21,6 +25,7 @@ import {
  * @property {string|null} proxyUrl - Connection URL or null
  * @property {number} expiresAt - Expiration Unix timestamp (seconds)
  * @property {boolean} isOnline - Server online status
+ * @property {boolean} canChangeLocation - Whether location can be changed
  * @property {number} [optionId] - Paid option ID
  * @property {number} [serverId] - Cloud server ID
  */
@@ -71,6 +76,7 @@ const useProxyList = () => {
 			proxyUrl: config.subconfig?.connection_url ?? null,
 			expiresAt: config.expires_at,
 			isOnline: config.is_online,
+			canChangeLocation: true,
 		}));
 	}, [configs, locationMap]);
 
@@ -85,11 +91,19 @@ const useProxyList = () => {
 			for (const config of option.configs) {
 				if (!config.id) continue;
 
-				const locationId = config.location_id ?? option.location_id;
+				const locationId =
+					config.location_id ??
+					option.location_id ??
+					DEFAULT_GAMING_LOCATION_ID;
+
+				const fallbackTitle =
+					config.is_extended_settings_enabled === false
+						? DEFAULT_GAMING_TITLE
+						: null;
 
 				items.push({
 					id: config.id,
-					title: config.title ?? option.title ?? null,
+					title: config.title ?? option.title ?? fallbackTitle,
 					source: "paid_option",
 					locationId,
 					locationRealId: config.location_real_id ?? locationId,
@@ -101,6 +115,7 @@ const useProxyList = () => {
 					optionId: option.option_id,
 					expiresAt: option.expires_at,
 					isOnline: config.is_online,
+					canChangeLocation: config.is_extended_settings_enabled !== false,
 				});
 			}
 		}
@@ -131,6 +146,7 @@ const useProxyList = () => {
 					serverId: server.id,
 					expiresAt: server.expires_at,
 					isOnline: server.is_online,
+					canChangeLocation: false,
 				});
 			}
 		}
