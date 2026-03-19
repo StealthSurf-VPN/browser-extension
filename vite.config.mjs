@@ -21,6 +21,7 @@ export default ({ mode }) => {
 		define: {
 			__BACKEND_URL__: JSON.stringify(env.VITE_BACKEND_URL),
 			__CONSOLE_URL__: JSON.stringify(env.VITE_CONSOLE_URL),
+			__IS_FIREFOX__: target === "firefox",
 		},
 		build: {
 			chunkSizeWarningLimit: Infinity,

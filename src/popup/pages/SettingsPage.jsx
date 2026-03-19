@@ -33,7 +33,7 @@ import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
 import { getProfileData, getProxyState } from "../state/selectors";
 
-const isFirefox = typeof globalThis.browser !== "undefined";
+const isFirefox = __IS_FIREFOX__;
 
 const usefulLinks = [
 	{
