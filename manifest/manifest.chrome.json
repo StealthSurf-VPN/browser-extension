@@ -13,8 +13,7 @@
 		"storage",
 		"webRequest",
 		"webRequestAuthProvider",
-		"alarms",
-		"management"
+		"alarms"
 	],
 	"host_permissions": ["<all_urls>"],
 	"action": {

@@ -36,9 +36,11 @@ const compareVersions = (a, b) => {
  */
 export const checkForUpdate = async () => {
 	try {
-		const self = await chrome.management.getSelf();
+		if (chrome.management?.getSelf) {
+			const self = await chrome.management.getSelf();
 
-		if (self.installType === "normal") return null;
+			if (self.installType === "normal") return null;
+		}
 
 		const cached = await chrome.storage.local.get(CACHE_KEY);
 
