@@ -2,10 +2,10 @@
 	"manifest_version": 3,
 	"name": "StealthSurf VPN",
 	"short_name": "StealthSurf",
-	"version": "1.0.9",
+	"version": "1.0.10",
 	"description": "Браузерное расширение для пользователей сервиса. Подключайтесь к своим конфигам прямо из браузера — без лишних настроек.",
 	"author": "StealthSurf VPN",
-	"homepage_url": "https://stealthsurf.app",
+	"homepage_url": "https://stealthsurf.space",
 	"minimum_chrome_version": "88",
 	"permissions": [
 		"identity",
@@ -37,7 +37,7 @@
 	"web_accessible_resources": [
 		{
 			"resources": ["callback.html"],
-			"matches": ["https://console.stealthsurf.app/*"]
+			"matches": ["https://console.stealthsurf.space/*"]
 		}
 	],
 	"offline_enabled": true

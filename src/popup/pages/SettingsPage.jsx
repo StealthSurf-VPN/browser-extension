@@ -39,7 +39,7 @@ const usefulLinks = [
 	{
 		title: "Telegram",
 		subtitle: "Публикуем важные новости",
-		url: "https://to.stealthsurf.app/telegram",
+		url: "https://t.me/stealthsurf_vpn",
 		Icon: Icon24AdvertisingOutline,
 	},
 	{
@@ -51,13 +51,13 @@ const usefulLinks = [
 	{
 		title: "Статус серверов",
 		subtitle: "Отслеживание состояния серверов",
-		url: "https://status.stealthsurf.app/status/servers",
+		url: "https://status.stealthsurf.space",
 		Icon: Icon24BroadcastOutline,
 	},
 	{
 		title: "Документация",
 		subtitle: "Инструкции по сервису",
-		url: "https://docs.stealthsurf.app",
+		url: "https://docs.stealthsurf.space",
 		Icon: Icon24BooksOutline,
 	},
 	{
@@ -69,7 +69,7 @@ const usefulLinks = [
 	{
 		title: "Список изменений",
 		subtitle: "Последние обновления проекта",
-		url: "https://updates.stealthsurf.app",
+		url: "https://updates.stealthsurf.space",
 		Icon: Icon24StarsOutline,
 	},
 	{
@@ -85,7 +85,7 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 
 	const showSnackbar = useSnackbarHandler();
 
-	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.9";
+	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.10";
 
 	const [proxyAllTraffic, setProxyAllTraffic] = useState(false);
 
@@ -322,7 +322,7 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 							before={<Icon24DocumentTextOutline />}
 							onClick={() =>
 								chrome.tabs.create({
-									url: "https://storage.stealthsurf.app/terms-of-use.pdf",
+									url: "https://storage.stealthsurf.space/terms-of-use.pdf",
 								})
 							}
 						>
@@ -335,7 +335,7 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 							before={<Icon28PrivacyOutline width={24} height={24} />}
 							onClick={() =>
 								chrome.tabs.create({
-									url: "https://storage.stealthsurf.app/privacy-policy.pdf",
+									url: "https://storage.stealthsurf.space/privacy-policy.pdf",
 								})
 							}
 						>

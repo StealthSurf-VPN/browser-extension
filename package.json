@@ -1,18 +1,18 @@
 {
 	"name": "stealthsurf-extension",
-	"version": "1.0.9",
+	"version": "1.0.10",
 	"description": "StealthSurf browser extension — HTTP proxy for Chrome and Firefox. Use your proxies, split tunneling, and more without installing VPN.",
 	"author": {
 		"name": "StealthSurf VPN",
-		"email": "admin@stealthsurf.app",
-		"url": "https://stealthsurf.app"
+		"email": "admin@stealthsurf.space",
+		"url": "https://stealthsurf.space"
 	},
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/stealthsurf-vpn/browser-extension.git"
 	},
-	"homepage": "https://stealthsurf.app",
+	"homepage": "https://stealthsurf.space",
 	"bugs": {
 		"url": "https://github.com/stealthsurf-vpn/browser-extension/issues"
 	},
