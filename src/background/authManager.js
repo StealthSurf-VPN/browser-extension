@@ -40,7 +40,12 @@ export const setTokens = async (accessToken, refreshToken) => {
  * Remove all auth tokens from storage.
  */
 export const clearTokens = async () => {
-	await storage.remove([STORAGE_KEYS.ACCESS_TOKEN, STORAGE_KEYS.REFRESH_TOKEN]);
+	await storage.remove([
+		STORAGE_KEYS.ACCESS_TOKEN,
+		STORAGE_KEYS.REFRESH_TOKEN,
+		STORAGE_KEYS.SYNC_LAST_SYNCED_AT,
+		STORAGE_KEYS.SYNC_DIRTY,
+	]);
 };
 
 let refreshPromise = null;
