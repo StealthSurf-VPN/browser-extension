@@ -21,6 +21,14 @@
 				{
 					"version": "1.0.10",
 					"update_link": "https://github.com/stealthsurf-vpn/browser-extension/releases/download/v1.0.10/stealthsurf-firefox-v1.0.10.xpi"
+				},
+				{
+					"version": "1.0.11",
+					"update_link": "https://github.com/stealthsurf-vpn/browser-extension/releases/download/v1.0.11/stealthsurf-firefox-v1.0.11.xpi"
+				},
+				{
+					"version": "1.0.12",
+					"update_link": "https://github.com/stealthsurf-vpn/browser-extension/releases/download/v1.0.12/stealthsurf-firefox-v1.0.12.xpi"
 				}
 			]
 		}
