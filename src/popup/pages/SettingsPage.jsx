@@ -30,8 +30,8 @@ import {
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
-import { useSplitTunnelSync } from "../hooks/useSplitTunnelSync";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
+import { useSplitTunnelSync } from "../hooks/useSplitTunnelSync";
 import { getProfileData, getProxyState } from "../state/selectors";
 
 const isFirefox = __IS_FIREFOX__;
