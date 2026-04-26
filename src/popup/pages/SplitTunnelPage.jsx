@@ -19,43 +19,20 @@ import React, { useEffect, useRef, useState } from "react";
 import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
 import punycode from "punycode/";
-
-const DOMAIN_RE =
-	/^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:xn--[a-z0-9-]+|[a-z]{2,})$/;
-
-const parseDomain = (input) => {
-	const trimmed = input.trim().toLowerCase();
-
-	if (!trimmed) return null;
-
-	const isWildcard = trimmed.startsWith("*.");
-
-	let work = isWildcard ? trimmed.slice(2) : trimmed;
-
-	try {
-		const url = new URL(work.includes("://") ? work : `https://${work}`);
-
-		work = url.hostname;
-	} catch {}
-
-	work = work.replace(/\/+$/, "");
-
-	try {
-		work = punycode.toASCII(work);
-	} catch {}
-
-	const domain = isWildcard ? `*.${work}` : work;
-
-	if (!DOMAIN_RE.test(domain)) return null;
-
-	return domain;
-};
+import { parseRule } from "../../shared/ipUtils.js";
 
 const EXPORT_HEADER = "# StealthSurf split tunneling rules";
 
 const MAX_IMPORT_BYTES = 1024 * 1024;
 
 const MODE_LINE_RE = /^#\s*mode:\s*(exclude|include)\s*$/i;
+
+const ruleToStorage = (rule) => {
+	if (rule.kind === "ipv4cidr" || rule.kind === "ipv6cidr")
+		return `${rule.network}/${rule.prefix}`;
+
+	return rule.value;
+};
 
 const buildExportText = (mode, domains) => {
 	const lines = [EXPORT_HEADER, `# mode: ${mode}`, ...domains];
@@ -87,9 +64,9 @@ const parseImportText = (text) => {
 			continue;
 		}
 
-		const domain = parseDomain(line);
+		const rule = parseRule(line);
 
-		if (domain) domains.push(domain);
+		if (rule) domains.push(ruleToStorage(rule));
 		else skipped++;
 	}
 
@@ -137,15 +114,17 @@ const SplitTunnelPage = ({ onBack }) => {
 	};
 
 	const handleAddDomain = async () => {
-		const domain = parseDomain(domainInput);
+		const rule = parseRule(domainInput);
 
-		if (!domain) {
-			if (domainInput.trim()) showSnackbar("Некорректный домен");
+		if (!rule) {
+			if (domainInput.trim()) showSnackbar("Некорректное правило");
 			return;
 		}
 
+		const domain = ruleToStorage(rule);
+
 		if (splitDomains.includes(domain)) {
-			showSnackbar("Домен уже добавлен");
+			showSnackbar("Правило уже добавлено");
 			return;
 		}
 
@@ -287,7 +266,7 @@ const SplitTunnelPage = ({ onBack }) => {
 					<Card>
 						<div className="ext-split-tunnel__input-row">
 							<Input
-								placeholder="example.com"
+								placeholder="example.com или 192.168.1.1"
 								value={domainInput}
 								onChange={(e) => setDomainInput(e.target.value)}
 								onKeyDown={(e) => {
@@ -309,7 +288,13 @@ const SplitTunnelPage = ({ onBack }) => {
 								{splitDomains.map((domain) => (
 									<div key={domain} className="ext-split-tunnel__domain-row">
 										<span className="ext-split-tunnel__domain-text">
-											{punycode.toUnicode(domain)}
+											{(() => {
+												const rule = parseRule(domain);
+
+												return rule && rule.kind === "domain"
+													? punycode.toUnicode(domain)
+													: domain;
+											})()}
 										</span>
 										<Button
 											size="m"
@@ -360,7 +345,10 @@ const SplitTunnelPage = ({ onBack }) => {
 						/>
 					</Card>
 
-					<Footer>Поддерживаются wildcard-домены: *.example.com</Footer>
+					<Footer>
+						Поддерживаются wildcard *.example.com и подсети 10.0.0.0/8,
+						2001:db8::/32
+					</Footer>
 				</div>
 			</Group>
 		</Panel>
