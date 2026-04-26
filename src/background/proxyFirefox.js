@@ -1,4 +1,5 @@
 import { STORAGE_KEYS, toBadgeCode } from "../shared/constants";
+import { parseRule, matchRule } from "../shared/ipUtils.js";
 
 let proxyConfig = null;
 let proxyResult = null;
@@ -81,32 +82,27 @@ const getBypassHosts = () => {
 	return bypassHosts;
 };
 
-/**
- * Check if a hostname matches a domain pattern (supports wildcards).
- * @param {string} hostname - Request hostname (e.g. "sub.example.com")
- * @param {string} pattern - Domain pattern (e.g. "*.example.com" or "example.com")
- * @returns {boolean} True if hostname matches the pattern
- */
-const matchesDomain = (hostname, pattern) => {
-	if (pattern.startsWith("*.")) {
-		const base = pattern.slice(2);
-		if (!base) return false;
-		return hostname === base || hostname.endsWith("." + base);
-	}
+const ruleCache = new Map();
 
-	if (!pattern) return false;
+const ruleFor = (entry) => {
+	if (ruleCache.has(entry)) return ruleCache.get(entry);
 
-	return hostname === pattern || hostname.endsWith("." + pattern);
+	const r = parseRule(entry);
+
+	ruleCache.set(entry, r);
+
+	return r;
 };
 
-/**
- * Check if a hostname matches any domain in the list.
- * @param {string} hostname - Request hostname
- * @param {string[]} domains - Array of domain patterns
- * @returns {boolean} True if any pattern matches
- */
-const matchesAnyDomain = (hostname, domains) =>
-	domains.some((d) => matchesDomain(hostname, d));
+const matchesAnyRule = (hostname, entries) => {
+	for (const entry of entries) {
+		const rule = ruleFor(entry);
+
+		if (rule && matchRule(hostname, rule)) return true;
+	}
+
+	return false;
+};
 
 /**
  * Firefox proxy.onRequest listener. Routes requests through proxy or direct
@@ -125,10 +121,10 @@ const proxyRequestListener = (details) => {
 
 		if (splitTunnelDomains.length > 0) {
 			if (splitTunnelMode === "include") {
-				if (!matchesAnyDomain(hostname, splitTunnelDomains)) {
+				if (!matchesAnyRule(hostname, splitTunnelDomains)) {
 					return { type: "direct" };
 				}
-			} else if (matchesAnyDomain(hostname, splitTunnelDomains)) {
+			} else if (matchesAnyRule(hostname, splitTunnelDomains)) {
 				return { type: "direct" };
 			}
 		}
@@ -153,6 +149,7 @@ const readSplitTunnelSettings = async () => {
 	splitTunnelMode = data[STORAGE_KEYS.SPLIT_TUNNEL_MODE] || "exclude";
 	splitTunnelDomains = data[STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS] || [];
 	bypassHosts = null;
+	ruleCache.clear();
 };
 
 /**
