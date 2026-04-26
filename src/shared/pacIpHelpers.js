@@ -64,6 +64,29 @@ function eqV6(a, b) {
 	return true;
 }
 
+function hostV4Form(host, isV4, v6) {
+	if (isV4) return host;
+	if (!v6) return null;
+	if (
+		v6[0] !== 0 ||
+		v6[1] !== 0 ||
+		v6[2] !== 0 ||
+		v6[3] !== 0 ||
+		v6[4] !== 0 ||
+		v6[5] !== 0xffff
+	)
+		return null;
+	return (
+		((v6[6] >> 8) & 0xff) +
+		"." +
+		(v6[6] & 0xff) +
+		"." +
+		((v6[7] >> 8) & 0xff) +
+		"." +
+		(v6[7] & 0xff)
+	);
+}
+
 function inV6(host, network, prefix) {
 	for (var i = 0; i < 8; i++) {
 		var startBit = i * 16;

@@ -32,11 +32,7 @@ export const parseIPv6 = (input) => {
 		const v4 = str.slice(lastColon + 1);
 		const v4Int = ipv4ToInt(v4);
 		if (v4Int === null) return null;
-		str =
-			str.slice(0, lastColon + 1) +
-			((v4Int >>> 16) & 0xffff).toString(16) +
-			":" +
-			(v4Int & 0xffff).toString(16);
+		str = `${str.slice(0, lastColon + 1)}${((v4Int >>> 16) & 0xffff).toString(16)}:${(v4Int & 0xffff).toString(16)}`;
 	}
 
 	const dcMatches = str.match(/::/g);
@@ -68,7 +64,7 @@ export const parseIPv6 = (input) => {
 	for (let i = 0; i < 8; i++) {
 		const g = groups[i];
 		if (!/^[0-9a-f]{1,4}$/.test(g)) return null;
-		result[i] = parseInt(g, 16);
+		result[i] = Number.parseInt(g, 16);
 	}
 
 	return result;
@@ -165,7 +161,7 @@ export const parseRule = (input) => {
 
 	if (slashIdx > 0 && /^\d+$/.test(trimmed.slice(slashIdx + 1))) {
 		const left = trimmed.slice(0, slashIdx);
-		const prefix = parseInt(trimmed.slice(slashIdx + 1), 10);
+		const prefix = Number.parseInt(trimmed.slice(slashIdx + 1), 10);
 
 		const v4 = ipv4ToInt(left);
 
@@ -265,9 +261,9 @@ export const matchRule = (hostname, rule) => {
 		if (pattern.startsWith("*.")) {
 			const base = pattern.slice(2);
 			if (!base) return false;
-			return hostname === base || hostname.endsWith("." + base);
+			return hostname === base || hostname.endsWith(`.${base}`);
 		}
-		return hostname === pattern || hostname.endsWith("." + pattern);
+		return hostname === pattern || hostname.endsWith(`.${pattern}`);
 	}
 
 	const hostV4 = IPV4_RE.test(hostname) ? hostname : null;

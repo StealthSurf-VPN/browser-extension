@@ -15,7 +15,7 @@ import {
 	PanelHeaderBack,
 	SegmentedControl,
 } from "@vkontakte/vkui";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
 import punycode from "punycode/";
@@ -141,6 +141,19 @@ const SplitTunnelPage = ({ onBack }) => {
 		setSplitDomains(updated);
 		await saveSplitTunnel(splitMode, updated);
 	};
+
+	const displayedDomains = useMemo(
+		() =>
+			splitDomains.map((domain) => {
+				const rule = parseRule(domain);
+
+				const display =
+					rule && rule.kind === "domain" ? punycode.toUnicode(domain) : domain;
+
+				return { domain, display };
+			}),
+		[splitDomains],
+	);
 
 	const handleExport = () => {
 		if (splitDomains.length === 0) return;
@@ -285,16 +298,10 @@ const SplitTunnelPage = ({ onBack }) => {
 
 						{splitDomains.length > 0 ? (
 							<div className="ext-split-tunnel__domain-list">
-								{splitDomains.map((domain) => (
+								{displayedDomains.map(({ domain, display }) => (
 									<div key={domain} className="ext-split-tunnel__domain-row">
 										<span className="ext-split-tunnel__domain-text">
-											{(() => {
-												const rule = parseRule(domain);
-
-												return rule && rule.kind === "domain"
-													? punycode.toUnicode(domain)
-													: domain;
-											})()}
+											{display}
 										</span>
 										<Button
 											size="m"

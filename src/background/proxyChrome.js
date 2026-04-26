@@ -146,14 +146,14 @@ const buildRuleCheck = (entry, result) => {
 	if (rule.kind === "ipv4") {
 		const safe = sanitizeIpv4(rule.value);
 		if (!safe) return "";
-		return `if (host === "${safe}") return "${result}";`;
+		return `if (__v4 === "${safe}") return "${result}";`;
 	}
 
 	if (rule.kind === "ipv4cidr") {
 		const net = sanitizeIpv4(rule.network);
 		const p = sanitizePrefix(rule.prefix, 32);
 		if (!net || p === null) return "";
-		return `if (__isV4 && inV4(host, "${net}", ${p})) return "${result}";`;
+		return `if (__v4 && inV4(__v4, "${net}", ${p})) return "${result}";`;
 	}
 
 	if (rule.kind === "ipv6") {
@@ -210,6 +210,7 @@ function FindProxyForURL(url, host) {
     ${internalChecks}
     var __isV4 = hostIsV4(host);
     var __v6 = __isV4 ? null : parseV6(host);
+    var __v4 = hostV4Form(host, __isV4, __v6);
     ${ruleChecks}
     return "DIRECT";
 }`;
@@ -226,6 +227,7 @@ function FindProxyForURL(url, host) {
     ${internalChecks}
     var __isV4 = hostIsV4(host);
     var __v6 = __isV4 ? null : parseV6(host);
+    var __v4 = hostV4Form(host, __isV4, __v6);
     ${ruleChecks}
     return "${proxyStr}";
 }`;
