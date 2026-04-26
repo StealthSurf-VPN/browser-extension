@@ -1,4 +1,8 @@
-import { Icon24DeleteOutline } from "@vkontakte/icons";
+import {
+	Icon24DeleteOutline,
+	Icon24DownloadOutline,
+	Icon24UploadOutline,
+} from "@vkontakte/icons";
 import {
 	Button,
 	Card,
@@ -11,7 +15,7 @@ import {
 	PanelHeaderBack,
 	SegmentedControl,
 } from "@vkontakte/vkui";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
 import punycode from "punycode/";
@@ -47,6 +51,51 @@ const parseDomain = (input) => {
 	return domain;
 };
 
+const EXPORT_HEADER = "# StealthSurf split tunneling rules";
+
+const MAX_IMPORT_BYTES = 1024 * 1024;
+
+const MODE_LINE_RE = /^#\s*mode:\s*(exclude|include)\s*$/i;
+
+const buildExportText = (mode, domains) => {
+	const lines = [EXPORT_HEADER, `# mode: ${mode}`, ...domains];
+
+	return `${lines.join("\n")}\n`;
+};
+
+const parseImportText = (text) => {
+	const stripped = text.replace(/^﻿/, "");
+
+	const lines = stripped.split(/\r?\n/);
+
+	let mode = null;
+
+	const domains = [];
+
+	let skipped = 0;
+
+	for (const raw of lines) {
+		const line = raw.trim();
+
+		if (!line) continue;
+
+		if (line.startsWith("#")) {
+			if (!mode) {
+				const match = line.match(MODE_LINE_RE);
+				if (match) mode = match[1].toLowerCase();
+			}
+			continue;
+		}
+
+		const domain = parseDomain(line);
+
+		if (domain) domains.push(domain);
+		else skipped++;
+	}
+
+	return { mode, domains, skipped };
+};
+
 const SplitTunnelPage = ({ onBack }) => {
 	const showSnackbar = useSnackbarHandler();
 
@@ -55,6 +104,8 @@ const SplitTunnelPage = ({ onBack }) => {
 	const [splitDomains, setSplitDomains] = useState([]);
 
 	const [domainInput, setDomainInput] = useState("");
+
+	const fileInputRef = useRef(null);
 
 	useEffect(() => {
 		(globalThis.browser?.storage || chrome.storage).local
@@ -110,6 +161,91 @@ const SplitTunnelPage = ({ onBack }) => {
 
 		setSplitDomains(updated);
 		await saveSplitTunnel(splitMode, updated);
+	};
+
+	const handleExport = () => {
+		if (splitDomains.length === 0) return;
+
+		const text = buildExportText(splitMode, splitDomains);
+
+		const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+
+		const url = URL.createObjectURL(blob);
+
+		const a = document.createElement("a");
+
+		a.href = url;
+		a.download = "stealthsurf-split-tunnel.txt";
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+
+		setTimeout(() => URL.revokeObjectURL(url), 0);
+	};
+
+	const handleImportFile = (event) => {
+		const file = event.target.files?.[0];
+
+		event.target.value = "";
+
+		if (!file) return;
+
+		if (file.size === 0) {
+			showSnackbar("Файл пустой");
+			return;
+		}
+
+		if (file.size > MAX_IMPORT_BYTES) {
+			showSnackbar("Файл слишком большой");
+			return;
+		}
+
+		const reader = new FileReader();
+
+		reader.onload = async () => {
+			const text = String(reader.result || "");
+
+			const parsed = parseImportText(text);
+
+			const existing = new Set(splitDomains);
+
+			const fresh = parsed.domains.filter((d) => !existing.has(d));
+
+			const merged = [...splitDomains, ...fresh];
+
+			const nextMode =
+				parsed.mode && parsed.mode !== splitMode ? parsed.mode : splitMode;
+
+			const modeChanged = nextMode !== splitMode;
+
+			if (fresh.length > 0 || modeChanged) {
+				setSplitDomains(merged);
+				if (modeChanged) setSplitMode(nextMode);
+				await saveSplitTunnel(nextMode, merged);
+			}
+
+			let message;
+
+			if (fresh.length > 0 || parsed.skipped > 0 || modeChanged) {
+				const parts = [];
+
+				if (fresh.length > 0) parts.push(`Импортировано: ${fresh.length}`);
+				if (parsed.skipped > 0) parts.push(`пропущено: ${parsed.skipped}`);
+				if (modeChanged) parts.push("режим обновлён");
+
+				message = parts.join(", ");
+			} else if (parsed.domains.length > 0) {
+				message = "Все домены уже в списке";
+			} else {
+				message = "Файл пустой";
+			}
+
+			showSnackbar(message);
+		};
+
+		reader.onerror = () => showSnackbar("Не удалось прочитать файл");
+
+		reader.readAsText(file, "utf-8");
 	};
 
 	return (
@@ -192,6 +328,36 @@ const SplitTunnelPage = ({ onBack }) => {
 								Добавьте домены для раздельного туннелирования
 							</div>
 						)}
+
+						<div className="ext-split-tunnel__actions-row">
+							<Button
+								size="m"
+								mode="secondary"
+								stretched
+								before={<Icon24DownloadOutline width={20} height={20} />}
+								onClick={handleExport}
+								disabled={splitDomains.length === 0}
+							>
+								Экспорт
+							</Button>
+							<Button
+								size="m"
+								mode="secondary"
+								stretched
+								before={<Icon24UploadOutline width={20} height={20} />}
+								onClick={() => fileInputRef.current?.click()}
+							>
+								Импорт
+							</Button>
+						</div>
+
+						<input
+							ref={fileInputRef}
+							type="file"
+							accept=".txt,text/plain"
+							style={{ display: "none" }}
+							onChange={handleImportFile}
+						/>
 					</Card>
 
 					<Footer>Поддерживаются wildcard-домены: *.example.com</Footer>

@@ -716,6 +716,17 @@ body:has(.vkuiPopoutWrapper) {
 	border-top: 1px solid var(--vkui--color_separator_primary);
 }
 
+.ext-split-tunnel__actions-row {
+	display: flex;
+	gap: 8px;
+	padding: 10px 12px;
+	border-top: 1px solid var(--vkui--color_separator_primary);
+}
+
+.ext-split-tunnel__actions-row .vkuiButton {
+	flex: 1;
+}
+
 /* Header actions group */
 .ext-header__actions {
 	display: flex;
