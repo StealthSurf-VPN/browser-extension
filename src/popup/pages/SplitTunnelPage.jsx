@@ -16,25 +16,26 @@ import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
 
 const DOMAIN_RE =
-	/^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/;
+	/^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:xn--[a-z0-9-]+|[a-z]{2,})$/;
 
 const parseDomain = (input) => {
-	let domain = input.trim().toLowerCase();
+	const trimmed = input.trim().toLowerCase();
 
-	if (!domain) return null;
+	if (!trimmed) return null;
+
+	const isWildcard = trimmed.startsWith("*.");
+
+	let work = isWildcard ? trimmed.slice(2) : trimmed;
 
 	try {
-		const url = new URL(domain.includes("://") ? domain : `https://${domain}`);
+		const url = new URL(work.includes("://") ? work : `https://${work}`);
 
-		domain = url.hostname;
+		work = url.hostname;
 	} catch {}
 
-	domain = domain.replace(/\/+$/, "");
+	work = work.replace(/\/+$/, "");
 
-	if (domain.startsWith("*.")) {
-		if (!DOMAIN_RE.test(domain)) return null;
-		return domain;
-	}
+	const domain = isWildcard ? `*.${work}` : work;
 
 	if (!DOMAIN_RE.test(domain)) return null;
 
