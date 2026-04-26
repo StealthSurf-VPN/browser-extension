@@ -18,6 +18,7 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
+import { useSplitTunnelSync } from "../hooks/useSplitTunnelSync";
 import punycode from "punycode/";
 import { parseRule } from "../../shared/ipUtils.js";
 
@@ -76,6 +77,8 @@ const parseImportText = (text) => {
 const SplitTunnelPage = ({ onBack }) => {
 	const showSnackbar = useSnackbarHandler();
 
+	const { syncIfNeeded, schedulePush } = useSplitTunnelSync();
+
 	const [splitMode, setSplitMode] = useState("exclude");
 
 	const [splitDomains, setSplitDomains] = useState([]);
@@ -85,24 +88,50 @@ const SplitTunnelPage = ({ onBack }) => {
 	const fileInputRef = useRef(null);
 
 	useEffect(() => {
+		let cancelled = false;
+
 		(globalThis.browser?.storage || chrome.storage).local
 			.get([STORAGE_KEYS.SPLIT_TUNNEL_MODE, STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS])
-			.then((data) => {
-				setSplitMode(data[STORAGE_KEYS.SPLIT_TUNNEL_MODE] || "exclude");
-				setSplitDomains(data[STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS] || []);
+			.then(async (data) => {
+				if (cancelled) return;
+
+				const mode = data[STORAGE_KEYS.SPLIT_TUNNEL_MODE] || "exclude";
+
+				const domains = data[STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS] || [];
+
+				setSplitMode(mode);
+				setSplitDomains(domains);
+
+				await syncIfNeeded({
+					mode,
+					domains,
+					applyRemote: async ({ mode: rMode, domains: rDomains }) => {
+						if (cancelled) return;
+						setSplitMode(rMode);
+						setSplitDomains(rDomains);
+						await saveSplitTunnel(rMode, rDomains, { skipSync: true });
+					},
+				});
 			});
+
+		return () => {
+			cancelled = true;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const notifyBackground = () =>
 		sendMessage({ type: MSG.UPDATE_PROXY_SETTINGS });
 
-	const saveSplitTunnel = async (mode, domains) => {
+	const saveSplitTunnel = async (mode, domains, options = {}) => {
 		try {
 			await (globalThis.browser?.storage || chrome.storage).local.set({
 				[STORAGE_KEYS.SPLIT_TUNNEL_MODE]: mode,
 				[STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS]: domains,
 			});
 			await notifyBackground();
+
+			if (!options.skipSync) await schedulePush(mode, domains);
 		} catch (err) {
 			console.error("Failed to save split tunnel settings:", err);
 		}
