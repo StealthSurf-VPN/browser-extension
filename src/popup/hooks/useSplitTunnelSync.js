@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
 	getSplitTunnelSettings,
 	updateSplitTunnelSettings,
@@ -50,7 +50,7 @@ const pushNow = async (mode, domains) => {
 
 		const code = res?.data?.statusCode;
 
-		if (code === 400 || code === 422) {
+		if (code >= 400 && code < 500 && code !== 401 && code !== 429) {
 			await storage().set({ [STORAGE_KEYS.SYNC_DIRTY]: false });
 			console.warn("Split-tunnel sync rejected by server", res.data);
 			return { ok: false };
@@ -66,6 +66,13 @@ const pushNow = async (mode, domains) => {
 
 export const useSplitTunnelSync = () => {
 	const debounceRef = useRef(null);
+
+	useEffect(
+		() => () => {
+			if (debounceRef.current) clearTimeout(debounceRef.current);
+		},
+		[],
+	);
 
 	const syncIfNeeded = useCallback(async ({ mode, domains, applyRemote }) => {
 		if (!(await isSyncEnabled())) return "disabled";
