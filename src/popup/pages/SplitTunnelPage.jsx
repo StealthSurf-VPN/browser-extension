@@ -36,6 +36,10 @@ const parseDomain = (input) => {
 
 	work = work.replace(/\/+$/, "");
 
+	try {
+		work = punycode.toASCII(work);
+	} catch {}
+
 	const domain = isWildcard ? `*.${work}` : work;
 
 	if (!DOMAIN_RE.test(domain)) return null;
