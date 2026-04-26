@@ -29,6 +29,9 @@ export const STORAGE_KEYS = {
 	OAUTH_REDIRECT_URI: "oauth_redirect_uri",
 	UPDATE_CHECK_CACHE: "update_check_cache",
 	SELECTED_CONFIG: "selected_config",
+	SYNC_ROUTING: "sync_routing",
+	SYNC_LAST_SYNCED_AT: "sync_last_synced_at",
+	SYNC_DIRTY: "sync_dirty",
 };
 
 export const CACHE_TTL_MS = 5 * 60 * 1000;
