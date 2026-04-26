@@ -14,6 +14,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
+import punycode from "punycode/";
 
 const DOMAIN_RE =
 	/^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:xn--[a-z0-9-]+|[a-z]{2,})$/;
@@ -168,7 +169,7 @@ const SplitTunnelPage = ({ onBack }) => {
 								{splitDomains.map((domain) => (
 									<div key={domain} className="ext-split-tunnel__domain-row">
 										<span className="ext-split-tunnel__domain-text">
-											{domain}
+											{punycode.toUnicode(domain)}
 										</span>
 										<Button
 											size="m"
