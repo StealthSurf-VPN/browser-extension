@@ -293,8 +293,10 @@ export const connectChrome = async (
 		},
 	});
 
-	chrome.action.setBadgeText({ text: badgeText });
-	chrome.action.setBadgeBackgroundColor({ color: "#2688EB" });
+	if (chrome.action) {
+		chrome.action.setBadgeText({ text: badgeText });
+		chrome.action.setBadgeBackgroundColor({ color: "#2688EB" });
+	}
 };
 
 /**
@@ -313,7 +315,7 @@ export const disconnectChrome = async () => {
 		[STORAGE_KEYS.PROXY_STATE]: { connected: false },
 	});
 
-	chrome.action.setBadgeText({ text: "" });
+	if (chrome.action) chrome.action.setBadgeText({ text: "" });
 };
 
 /**
