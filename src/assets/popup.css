@@ -16,6 +16,47 @@ html.is-mobile,
 html.is-mobile body {
 	width: 100vw;
 	max-width: none;
+	min-height: 100vh;
+	max-height: none;
+}
+
+html.is-mobile .ext-loading,
+html.is-mobile .ext-auth-page,
+html.is-mobile .ext-main,
+html.is-mobile .ext-config-select,
+html.is-mobile .ext-settings {
+	min-height: 100vh;
+}
+
+html.is-mobile .ext-toggle {
+	width: 168px;
+	height: 168px;
+}
+
+html.is-mobile .ext-toggle svg {
+	width: 64px;
+	height: 64px;
+}
+
+html.is-mobile .ext-toggle-area {
+	padding: 48px 16px 32px;
+	gap: 24px;
+}
+
+html.is-mobile .ext-toggle-status__label {
+	font-size: 26px;
+}
+
+html.is-mobile .ext-toggle-status__location {
+	font-size: 16px;
+}
+
+html.is-mobile .ext-header {
+	padding: 12px 16px 14px 20px;
+}
+
+html.is-mobile .ext-header__title {
+	font-size: 18px;
 }
 
 /* iOS-style VK UI overrides */
