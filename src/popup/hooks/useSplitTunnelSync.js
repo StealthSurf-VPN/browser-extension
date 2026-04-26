@@ -113,10 +113,10 @@ export const useSplitTunnelSync = () => {
 		return "noop";
 	}, []);
 
-	const schedulePush = useCallback((mode, domains) => {
+	const schedulePush = useCallback(async (mode, domains) => {
 		if (debounceRef.current) clearTimeout(debounceRef.current);
 
-		storage().set({ [STORAGE_KEYS.SYNC_DIRTY]: true });
+		await storage().set({ [STORAGE_KEYS.SYNC_DIRTY]: true });
 
 		debounceRef.current = setTimeout(async () => {
 			debounceRef.current = null;
