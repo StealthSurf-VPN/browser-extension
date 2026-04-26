@@ -40,16 +40,20 @@ npm run release          # Full release (build + package)
 - `src/popup/pages/ConfigSelectPage.jsx` — Full config list with ping
 - `src/popup/pages/LocationSelectPage.jsx` — Location picker with ping
 - `src/popup/pages/SettingsPage.jsx` — Profile, settings, protocol selector (SOCKS5/HTTP, Firefox only)
-- `src/popup/pages/SplitTunnelPage.jsx` — Domain-based split tunneling
+- `src/popup/pages/SplitTunnelPage.jsx` — Split tunneling: domains, IPv4/IPv6/CIDR, .txt import/export, account sync
 - `src/popup/pages/AuthPage.jsx` — PKCE OAuth login
 - `src/popup/components/ErrorBoundary.jsx` — Error boundary with key-based remount
 - `src/popup/hooks/useProxyConnection.js` — Connect/disconnect with credential validation + protocol from storage
 - `src/popup/hooks/useProxyList.js` — Data fetching and normalization
 - `src/popup/hooks/useLoadResources.js` — Parallel data loading with retry
 - `src/popup/hooks/useExtAuth.js` — Auth check via storage listener
+- `src/popup/hooks/useSplitTunnelSync.js` — Sync state machine (pull-on-mount, debounced push-on-edit)
 - `src/popup/state/atoms.js` — Recoil atoms (extension, proxy, resources, pings)
 - `src/api/api.instance.js` — Axios with chrome.storage tokens + refresh timeout
+- `src/api/routes/route.profile-extension.js` — Account sync endpoints (GET/PUT /profile/extension/split-tunnel)
 - `src/shared/constants.js` — Message types, storage keys
+- `src/shared/ipUtils.js` — IPv4/IPv6/CIDR parsing + matching (popup + Firefox listener)
+- `src/shared/pacIpHelpers.js` — ES5 PAC-safe IP helpers (inlined into PAC via Vite `?raw`)
 - `src/shared/updateChecker.js` — GitHub Releases version checker (requires management permission)
 - `src/shared/ping.js` — Ping measurement via XHR
 - `src/shared/getPingLabel.jsx` — Colored ping label JSX component
@@ -89,7 +93,7 @@ npm run release          # Full release (build + package)
 
 - `messageHandler.js` validates `sender.id === chrome.runtime.id` on all messages
 - `authHandler` in proxyChrome.js limits retries to 2 per requestId (prevents infinite loop)
-- Domain sanitization uses strict whitelist `[a-z0-9.*_-]`
+- Rule sanitization is per-kind: `sanitizeDomain` (whitelist), `sanitizeIpv4` (regex), `sanitizePrefix` (range). IPv6 entries emitted as integer arrays — zero injection surface.
 - OAuth uses `authInProgress` lock to prevent concurrent flows
 - Token refresh has 10s timeout via `Promise.race`
 
