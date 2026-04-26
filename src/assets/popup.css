@@ -1,7 +1,7 @@
 html,
 body {
-	width: 100vw;
-	max-width: 380px;
+	width: 380px;
+	min-width: 380px;
 	min-height: 520px;
 	max-height: 600px;
 	margin: 0;
@@ -15,6 +15,7 @@ body {
 html.is-mobile,
 html.is-mobile body {
 	width: 100vw;
+	min-width: 0;
 	max-width: none;
 	min-height: 100vh;
 	max-height: none;
