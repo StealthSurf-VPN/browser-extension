@@ -14,6 +14,7 @@
 | `npm run build:all:github` | Build both platforms (GitHub) |
 | `npm run format` | Run Biome formatter |
 | `npm run lint` | Run Biome linter |
+| `npm run lint:firefox` | Auto-rebuilds AMO variant + runs `web-ext lint` |
 | `npm run release` | Full release: build + package |
 | `npm run pack:zip` | Package as ZIP |
 | `npm run pack:crx` | Package as CRX (Chrome) |
@@ -61,6 +62,20 @@ Key settings:
 - `manifest/manifest.firefox.github.json` — Firefox Manifest V2 (GitHub, with `update_url`)
 
 Key permissions: `proxy`, `storage`, `webRequest`, `webRequestAuthProvider` (Chrome), `webRequestBlocking` (Firefox), `alarms`, `management`.
+
+## Firefox for Android
+
+Both Firefox manifests declare `gecko_android.strict_min_version = "113.0"` — the Fenix version that opened the extension ecosystem. Test on a real device via:
+
+```bash
+npm run build:firefox && npx web-ext run \
+  --target=firefox-android \
+  --android-device=<adb-serial> \
+  --firefox-apk=org.mozilla.fenix \
+  --source-dir=dist/firefox
+```
+
+`org.mozilla.fenix` = Firefox Nightly (required for unsigned add-ons). USB debugging on, `xpinstall.signatures.required=false` on the device.
 
 ## Packaging
 

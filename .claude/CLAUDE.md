@@ -15,6 +15,7 @@ npm run build:all             # Build both platforms (AMO)
 npm run build:all:github      # Build both platforms (GitHub)
 npm run format           # Biome formatter
 npm run lint             # Biome linter
+npm run lint:firefox     # web-ext lint on AMO Firefox build (auto-rebuilds)
 npm run release          # Full release (build + package)
 ```
 

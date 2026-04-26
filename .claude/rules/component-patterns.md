@@ -2,7 +2,12 @@
 
 ## Popup Structure
 
-The popup is a compact React app (380×520px) without URL routing. Navigation is state-based:
+The popup is a React app without URL routing. Sizing is platform-conditional:
+
+- **Desktop:** fixed `380×520` (380px width, 520–600px height) — set on `html, body` in `popup.css`.
+- **Firefox Android:** fills viewport. `main.jsx` adds `is-mobile` class to `<html>` when UA contains `Android` or `Mobile`. CSS rules under `html.is-mobile` override `width`/`max-width`/`max-height` and scale up the power button (168×168), header, and status text.
+
+Navigation is state-based:
 
 ```jsx
 // App.jsx
