@@ -12,6 +12,22 @@ body {
 	-moz-osx-font-smoothing: grayscale;
 }
 
+html.is-mobile,
+html.is-mobile body {
+	width: 100vw;
+	max-width: none;
+	min-height: 100vh;
+	max-height: none;
+}
+
+html.is-mobile .ext-loading,
+html.is-mobile .ext-auth-page,
+html.is-mobile .ext-main,
+html.is-mobile .ext-config-select,
+html.is-mobile .ext-settings {
+	min-height: 100vh;
+}
+
 /* iOS-style VK UI overrides */
 .vkuiCard {
 	border-radius: 14px !important;
