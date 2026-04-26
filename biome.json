@@ -49,5 +49,22 @@
 			"quoteStyle": "double"
 		},
 		"jsxRuntime": "reactClassic"
-	}
+	},
+	"overrides": [
+		{
+			"include": ["src/shared/pacIpHelpers.js"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useTemplate": "off",
+						"noVar": "off",
+						"useNumberNamespace": "off"
+					},
+					"correctness": {
+						"noInnerDeclarations": "off"
+					}
+				}
+			}
+		}
+	]
 }
