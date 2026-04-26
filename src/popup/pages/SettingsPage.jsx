@@ -30,6 +30,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
+import { useSplitTunnelSync } from "../hooks/useSplitTunnelSync";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
 import { getProfileData, getProxyState } from "../state/selectors";
 
@@ -89,12 +90,25 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 
 	const [proxyAllTraffic, setProxyAllTraffic] = useState(false);
 
+	const [syncEnabled, setSyncEnabled] = useState(true);
+
+	const { syncIfNeeded } = useSplitTunnelSync();
+
 	useEffect(() => {
 		(globalThis.browser?.storage || chrome.storage).local
 			.get(STORAGE_KEYS.PROXY_ALL_TRAFFIC)
 			.then((data) =>
 				setProxyAllTraffic(!!data[STORAGE_KEYS.PROXY_ALL_TRAFFIC]),
 			);
+	}, []);
+
+	useEffect(() => {
+		(globalThis.browser?.storage || chrome.storage).local
+			.get(STORAGE_KEYS.SYNC_ROUTING)
+			.then((data) => {
+				const value = data[STORAGE_KEYS.SYNC_ROUTING];
+				setSyncEnabled(value === undefined ? true : !!value);
+			});
 	}, []);
 
 	const proxyState = useRecoilValue(getProxyState);
@@ -124,6 +138,43 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 			[STORAGE_KEYS.PROXY_ALL_TRAFFIC]: checked,
 		});
 		await sendMessage({ type: MSG.UPDATE_PROXY_SETTINGS });
+	};
+
+	const handleSyncRoutingToggle = async (next) => {
+		setSyncEnabled(next);
+
+		await (globalThis.browser?.storage || chrome.storage).local.set({
+			[STORAGE_KEYS.SYNC_ROUTING]: next,
+		});
+
+		if (!next) return;
+
+		const stored = await (
+			globalThis.browser?.storage || chrome.storage
+		).local.get([
+			STORAGE_KEYS.SPLIT_TUNNEL_MODE,
+			STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS,
+		]);
+
+		const mode = stored[STORAGE_KEYS.SPLIT_TUNNEL_MODE] || "exclude";
+
+		const domains = stored[STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS] || [];
+
+		const result = await syncIfNeeded({
+			mode,
+			domains,
+			applyRemote: async ({ mode: rMode, domains: rDomains }) => {
+				await (globalThis.browser?.storage || chrome.storage).local.set({
+					[STORAGE_KEYS.SPLIT_TUNNEL_MODE]: rMode,
+					[STORAGE_KEYS.SPLIT_TUNNEL_DOMAINS]: rDomains,
+				});
+				await sendMessage({ type: MSG.UPDATE_PROXY_SETTINGS });
+			},
+		});
+
+		if (result === "pulled") showSnackbar("Правила загружены");
+		else if (result === "pushed-migration")
+			showSnackbar("Правила сохранены в аккаунте");
 	};
 
 	const handleCopy = (text) => {
@@ -240,6 +291,26 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 							multiline
 						>
 							Проксировать расширение
+						</SimpleCell>
+					</Card>
+
+					<Header mode="secondary" className="ext-settings__section-header">
+						Синхронизация
+					</Header>
+
+					<Card>
+						<SimpleCell
+							Component="label"
+							after={
+								<Switch
+									checked={syncEnabled}
+									onChange={(e) => handleSyncRoutingToggle(e.target.checked)}
+								/>
+							}
+							subtitle="Сохранять туннелирование в аккаунте и подхватывать на других устройствах"
+							multiline
+						>
+							Синхронизация правил
 						</SimpleCell>
 					</Card>
 
