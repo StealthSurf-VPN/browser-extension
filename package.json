@@ -44,7 +44,7 @@
 		"release:github": "rm -rf release && npm run build:all:github && npm run pack:all",
 		"release:store": "rm -rf release && npm run build:all && npm run pack:all",
 		"pack:xpi": "node scripts/pack.mjs xpi",
-		"lint:firefox": "web-ext lint --source-dir dist/firefox --warnings-as-errors=false"
+		"lint:firefox": "npm run build:firefox && web-ext lint --source-dir dist/firefox --warnings-as-errors=false"
 	},
 	"dependencies": {
 		"@vkontakte/icons": "^2.170.0",
