@@ -43,7 +43,8 @@
 		"pack:all": "node scripts/pack.mjs all",
 		"release:github": "rm -rf release && npm run build:all:github && npm run pack:all",
 		"release:store": "rm -rf release && npm run build:all && npm run pack:all",
-		"pack:xpi": "node scripts/pack.mjs xpi"
+		"pack:xpi": "node scripts/pack.mjs xpi",
+		"lint:firefox": "web-ext lint --source-dir dist/firefox --warnings-as-errors=false"
 	},
 	"dependencies": {
 		"@vkontakte/icons": "^2.170.0",
@@ -60,6 +61,7 @@
 		"@vitejs/plugin-react-swc": "^3.10.2",
 		"crx3": "^2.0.0",
 		"sass": "^1.89.2",
-		"vite": "^6.4.1"
+		"vite": "^6.4.1",
+		"web-ext": "^8.0.0"
 	}
 }
