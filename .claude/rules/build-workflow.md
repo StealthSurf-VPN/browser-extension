@@ -15,10 +15,12 @@
 | `npm run format` | Run Biome formatter |
 | `npm run lint` | Run Biome linter |
 | `npm run lint:firefox` | Auto-rebuilds AMO variant + runs `web-ext lint` |
-| `npm run release` | Full release: build + package |
 | `npm run pack:zip` | Package as ZIP |
 | `npm run pack:crx` | Package as CRX (Chrome) |
 | `npm run pack:xpi` | Package as XPI (Firefox) |
+| `npm run pack:all` | Package all formats (ZIP + CRX + XPI) |
+| `npm run release:github` | Full GitHub release: `build:all:github` + `pack:all` |
+| `npm run release:store` | Full store release: `build:all` + `pack:all` |
 
 ## Build Process
 
@@ -84,6 +86,8 @@ npm run build:firefox && npx web-ext run \
 - ZIP: `dist/chrome/` → `release/stealthsurf-chrome-vX.Y.Z.zip`
 - CRX: signed with `key.pem` → `release/stealthsurf-chrome-vX.Y.Z.crx`
 - XPI: `dist/firefox/` → `release/stealthsurf-firefox-vX.Y.Z.xpi`
+
+`pack:all` runs ZIP + CRX + XPI in sequence. Both `release:github` and `release:store` clean `release/` first (`rm -rf release`).
 
 ## Firefox Auto-Update
 
