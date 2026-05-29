@@ -40,43 +40,43 @@ const usefulLinks = [
 	{
 		title: "Telegram",
 		subtitle: "Публикуем важные новости",
-		url: "https://to.stealthsurf.space/channel",
+		url: "https://to.stealthsurf.net/channel",
 		Icon: Icon24AdvertisingOutline,
 	},
 	{
 		title: "Telegram-бот",
 		subtitle: "Консоль в формате Telegram-бота",
-		url: "https://to.stealthsurf.space/bot",
+		url: "https://to.stealthsurf.net/bot",
 		Icon: Icon24RobotOutline,
 	},
 	{
 		title: "Статус серверов",
 		subtitle: "Отслеживание состояния серверов",
-		url: "https://to.stealthsurf.space/status",
+		url: "https://to.stealthsurf.net/status",
 		Icon: Icon24BroadcastOutline,
 	},
 	{
 		title: "Документация",
 		subtitle: "Инструкции по сервису",
-		url: "https://to.stealthsurf.space/docs",
+		url: "https://to.stealthsurf.net/docs",
 		Icon: Icon24BooksOutline,
 	},
 	{
 		title: "Дорожная карта",
 		subtitle: "План развития проекта",
-		url: "https://to.stealthsurf.space/trello",
+		url: "https://to.stealthsurf.net/trello",
 		Icon: Icon24SubscriptionsOutline,
 	},
 	{
 		title: "Список изменений",
 		subtitle: "Последние обновления проекта",
-		url: "https://to.stealthsurf.space/updates",
+		url: "https://to.stealthsurf.net/updates",
 		Icon: Icon24StarsOutline,
 	},
 	{
 		title: "Поддержка",
 		subtitle: "Если есть какие-то вопросы",
-		url: "https://to.stealthsurf.space/support",
+		url: "https://to.stealthsurf.net/support",
 		Icon: Icon24MessagesOutline,
 	},
 ];
@@ -86,7 +86,7 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 
 	const showSnackbar = useSnackbarHandler();
 
-	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.12";
+	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.13";
 
 	const [proxyAllTraffic, setProxyAllTraffic] = useState(false);
 
@@ -393,7 +393,7 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 							before={<Icon24DocumentTextOutline />}
 							onClick={() =>
 								chrome.tabs.create({
-									url: "https://storage.stealthsurf.space/terms-of-use.pdf",
+									url: "https://storage.stealthsurf.net/terms-of-use.pdf",
 								})
 							}
 						>
@@ -406,7 +406,7 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 							before={<Icon28PrivacyOutline width={24} height={24} />}
 							onClick={() =>
 								chrome.tabs.create({
-									url: "https://storage.stealthsurf.space/privacy-policy.pdf",
+									url: "https://storage.stealthsurf.net/privacy-policy.pdf",
 								})
 							}
 						>

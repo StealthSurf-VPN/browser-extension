@@ -1,6 +1,6 @@
 # StealthSurf Browser Extension
 
-Cross-browser extension for connecting to proxies via [StealthSurf VPN](https://stealthsurf.space).
+Cross-browser extension for connecting to proxies via [StealthSurf VPN](https://stealthsurf.net).
 
 ## Features
 

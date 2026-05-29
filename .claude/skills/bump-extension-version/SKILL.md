@@ -23,7 +23,7 @@ Atomic version bump across all version-tracking files in the StealthSurf extensi
 1. **Read current version** from `package.json` (line 3 area, key `"version"`).
 2. **Verify in-sync** — all 4 files (package.json + 3 manifests) must currently have the same version. If they drift, halt and report which file disagrees before bumping.
 3. **Ask user**: `patch` / `minor` / `major`, or accept an explicit version. Default to `patch`.
-4. **Compute next** semver. Example: `1.0.12` + patch → `1.0.13`.
+4. **Compute next** semver. Example: `1.0.13` + patch → `1.0.14`.
 5. **Edit version field** in all four version files (single line change each).
 6. **Append entry** to `updates.json` `addons["extension@stealthsurf.app"].updates[]` array (after the existing entries):
    ```json

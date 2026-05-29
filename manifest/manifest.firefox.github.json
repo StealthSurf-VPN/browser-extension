@@ -2,13 +2,13 @@
 	"manifest_version": 2,
 	"name": "StealthSurf VPN",
 	"short_name": "StealthSurf",
-	"version": "1.0.12",
+	"version": "1.0.13",
 	"description": "Браузерное расширение для пользователей сервиса. Подключайтесь к своим конфигам прямо из браузера — без лишних настроек.",
 	"author": "StealthSurf VPN",
-	"homepage_url": "https://stealthsurf.space",
+	"homepage_url": "https://stealthsurf.net",
 	"developer": {
 		"name": "StealthSurf VPN",
-		"url": "https://stealthsurf.space"
+		"url": "https://stealthsurf.net"
 	},
 	"permissions": [
 		"proxy",
