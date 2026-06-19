@@ -1,18 +1,20 @@
-import { AppRoot, ConfigProvider, Spinner } from "@vkontakte/vkui";
+import { AppRoot, ConfigProvider } from "@vkontakte/vkui";
 import "@vkontakte/vkui/dist/vkui.css";
 import { SnackbarProvider } from "notistack";
 import React, { useEffect, useMemo, useState } from "react";
 import { useRecoilValue } from "recoil";
 import ErrorBoundary from "./components/ErrorBoundary";
+import MainPageSkeleton from "./components/MainPageSkeleton";
 import useExtAuth from "./hooks/useExtAuth";
 import useLoadResources from "./hooks/useLoadResources";
 import AuthPage from "./pages/AuthPage";
 import ConfigSelectPage from "./pages/ConfigSelectPage";
+import FeedbackPage from "./pages/FeedbackPage";
 import LocationSelectPage from "./pages/LocationSelectPage";
 import MainPage from "./pages/MainPage";
 import SettingsPage from "./pages/SettingsPage";
 import SplitTunnelPage from "./pages/SplitTunnelPage";
-import { getLocations } from "./state/selectors";
+import { getLocations, getPaidOptionLocationsMap } from "./state/selectors";
 import "../assets/popup.css";
 
 const detectPlatform = () => {
@@ -31,9 +33,32 @@ const App = () => {
 		loading: resourcesLoading,
 		error: resourcesError,
 		reload: reloadResources,
-	} = useLoadResources();
+	} = useLoadResources(isAuthenticated);
 
 	const locations = useRecoilValue(getLocations);
+
+	const paidOptionLocations = useRecoilValue(getPaidOptionLocationsMap);
+
+	const combinedLocations = useMemo(() => {
+		const base = locations ?? [];
+
+		if (!paidOptionLocations) return base;
+
+		const seen = new Set(base.map((loc) => loc.id));
+
+		const extra = [];
+
+		for (const locs of Object.values(paidOptionLocations)) {
+			for (const loc of locs ?? []) {
+				if (seen.has(loc.id)) continue;
+
+				seen.add(loc.id);
+				extra.push(loc);
+			}
+		}
+
+		return extra.length ? [...base, ...extra] : base;
+	}, [locations, paidOptionLocations]);
 
 	const [activePage, setActivePage] = useState("main");
 
@@ -81,20 +106,14 @@ const App = () => {
 	};
 
 	const renderPage = () => {
-		if (isLoading) {
-			return (
-				<div className="ext-loading">
-					<Spinner size="large" />
-				</div>
-			);
-		}
+		if (isLoading) return <MainPageSkeleton />;
 
 		if (!isAuthenticated) return <AuthPage onLogin={openLogin} />;
 
 		if (activePage === "configSelect") {
 			return (
 				<ConfigSelectPage
-					locations={locations}
+					locations={combinedLocations}
 					loading={resourcesLoading}
 					error={resourcesError}
 					reload={reloadResources}
@@ -123,8 +142,13 @@ const App = () => {
 					onBack={handleBack}
 					onLogout={handleLogout}
 					setPopout={setPopout}
+					onOpenFeedback={() => setActivePage("feedback")}
 				/>
 			);
+		}
+
+		if (activePage === "feedback") {
+			return <FeedbackPage onBack={() => setActivePage("settings")} />;
 		}
 
 		return (
@@ -135,7 +159,7 @@ const App = () => {
 				onOpenLocationSelect={(config) =>
 					handleOpenLocationSelect(config, "main")
 				}
-				locations={locations}
+				locations={combinedLocations}
 				loading={resourcesLoading}
 			/>
 		);

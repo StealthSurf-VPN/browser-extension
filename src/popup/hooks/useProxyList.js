@@ -2,12 +2,14 @@ import { useMemo } from "react";
 import { useRecoilValue } from "recoil";
 import {
 	DEFAULT_GAMING_LOCATION_ID,
-	DEFAULT_GAMING_TITLE,
+	PAID_OPTION_FALLBACK_TITLES,
+	PAID_OPTION_LOCATION_EXCLUDED_IDS,
 } from "../../shared/constants";
 import {
 	getCloudServers,
 	getConfigs,
 	getLocations,
+	getPaidOptionLocationsMap,
 	getPaidOptions,
 } from "../state/selectors";
 
@@ -40,6 +42,8 @@ const useProxyList = () => {
 
 	const paidOptions = useRecoilValue(getPaidOptions);
 
+	const paidOptionLocations = useRecoilValue(getPaidOptionLocationsMap);
+
 	const cloudServers = useRecoilValue(getCloudServers);
 
 	const locations = useRecoilValue(getLocations);
@@ -59,6 +63,22 @@ const useProxyList = () => {
 
 	const getLocationCode = (locationId) =>
 		locationMap.get(Number(locationId))?.code ?? null;
+
+	const paidLocationMaps = useMemo(() => {
+		const byOption = new Map();
+
+		if (paidOptionLocations) {
+			for (const [optionId, locs] of Object.entries(paidOptionLocations)) {
+				const map = new Map();
+
+				for (const loc of locs ?? []) map.set(Number(loc.id), loc);
+
+				byOption.set(Number(optionId), map);
+			}
+		}
+
+		return byOption;
+	}, [paidOptionLocations]);
 
 	const normalizedConfigs = useMemo(() => {
 		if (!configs) return [];
@@ -97,9 +117,11 @@ const useProxyList = () => {
 					DEFAULT_GAMING_LOCATION_ID;
 
 				const fallbackTitle =
-					config.is_extended_settings_enabled === false
-						? DEFAULT_GAMING_TITLE
-						: null;
+					PAID_OPTION_FALLBACK_TITLES[option.option_id] ?? null;
+
+				const paidLoc = paidLocationMaps
+					.get(Number(option.option_id))
+					?.get(Number(locationId));
 
 				items.push({
 					id: config.id,
@@ -107,21 +129,23 @@ const useProxyList = () => {
 					source: "paid_option",
 					locationId,
 					locationRealId: config.location_real_id ?? locationId,
-					locationTitle: getLocationTitle(locationId),
-					locationCode: getLocationCode(locationId),
+					locationTitle: paidLoc?.title ?? getLocationTitle(locationId),
+					locationCode: paidLoc?.code ?? getLocationCode(locationId),
 					protocol: config.protocol,
 					hasProxy: !!config.subconfig,
 					proxyUrl: config.subconfig?.connection_url ?? null,
 					optionId: option.option_id,
 					expiresAt: option.expires_at,
 					isOnline: config.is_online,
-					canChangeLocation: config.is_extended_settings_enabled !== false,
+					canChangeLocation: !PAID_OPTION_LOCATION_EXCLUDED_IDS.has(
+						option.option_id,
+					),
 				});
 			}
 		}
 
 		return items;
-	}, [paidOptions, locationMap]);
+	}, [paidOptions, locationMap, paidLocationMaps]);
 
 	const normalizedCloudServers = useMemo(() => {
 		if (!cloudServers) return [];

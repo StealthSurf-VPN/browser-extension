@@ -819,3 +819,12 @@ body:has(.vkuiPopoutWrapper) {
 .ext-change-location-banner__arrow {
 	padding-right: 4px;
 }
+
+.ext-feedback-page__form-item {
+	padding: 10px 0;
+}
+
+.ext-feedback-page__submit--off {
+	opacity: 0.64;
+	pointer-events: none;
+}

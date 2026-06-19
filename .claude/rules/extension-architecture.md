@@ -111,6 +111,8 @@ Two modes stored in `chrome.storage.local`:
 
 Wildcards: `*.example.com` matches `example.com` and all subdomains.
 
+Rules also include IPv4/IPv6/CIDR entries (matched via `shared/ipUtils.js`; Chrome PAC uses ES5-safe `shared/pacIpHelpers.js`). `useSplitTunnelSync` syncs rules to the account (`route.profile-extension.js`); bookkeeping in `sync_routing`/`sync_last_synced_at`/`sync_dirty`.
+
 Applied via `MSG.UPDATE_PROXY_SETTINGS` when settings change.
 
 ## Service Worker Lifecycle (Chrome MV3)
@@ -141,6 +143,9 @@ All persistent state in `chrome.storage.local`:
 | `oauth_code_verifier` | PKCE code_verifier (Firefox, temporary) |
 | `oauth_redirect_uri` | OAuth redirect URI (Firefox, temporary) |
 | `selected_config` | Last selected config `{ id, source }` (popup state persistence) |
+| `sync_routing` | Boolean — account sync enabled (default true) |
+| `sync_last_synced_at` | Server `updated_at` of last successful split-tunnel sync |
+| `sync_dirty` | Boolean — local split-tunnel edits pending push |
 
 ## Popup State
 
@@ -149,7 +154,7 @@ Recoil for in-memory state. On every popup open, state restored from background 
 Navigation is state-based:
 
 ```text
-activePage: "main" | "configSelect" | "locationSelect" | "settings" | "splitTunnel"
+activePage: "main" | "configSelect" | "locationSelect" | "settings" | "splitTunnel" | "feedback"
 ```
 
 ## Update Checker

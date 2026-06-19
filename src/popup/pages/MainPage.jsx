@@ -4,7 +4,13 @@ import {
 	Icon24ShuffleOutline,
 	Icon28GlobeOutline,
 } from "@vkontakte/icons";
-import { IconButton, Separator, SimpleCell, Spinner } from "@vkontakte/vkui";
+import {
+	IconButton,
+	Separator,
+	SimpleCell,
+	Skeleton,
+	Spinner,
+} from "@vkontakte/vkui";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRecoilState } from "recoil";
 import { MSG, sendMessage, toBadgeCode } from "../../shared/constants";
@@ -356,12 +362,22 @@ const MainPage = ({
 				<div className="ext-config-selector" onClick={onOpenConfigSelect}>
 					{loading && !displayConfig ? (
 						<div className="ext-config-selector__content">
-							<Spinner size="small" />
+							<span className="ext-config-selector__flag">
+								<Skeleton width={28} height={28} borderRadius={14} />
+							</span>
+							<div className="ext-config-selector__info">
+								<Skeleton width={140} height={16} />
+								<Skeleton width={100} height={12} style={{ marginTop: 4 }} />
+							</div>
 						</div>
 					) : displayConfig ? (
 						<div className="ext-config-selector__content">
 							<span className="ext-config-selector__flag">
-								<CountryFlag code={displayLocation?.code} size={28} />
+								<CountryFlag
+									code={displayLocation?.code}
+									size={28}
+									loading={loading}
+								/>
 							</span>
 							<div className="ext-config-selector__info">
 								<span className="ext-config-selector__name">

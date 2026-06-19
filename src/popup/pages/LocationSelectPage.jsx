@@ -25,10 +25,21 @@ import CountryFlag from "../../shared/countryFlag.jsx";
 import { measureBest } from "../../shared/ping";
 import useProxyConnection from "../hooks/useProxyConnection";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
-import { getLocations, getPings } from "../state/selectors";
+import {
+	getLocations,
+	getPaidOptionLocationsMap,
+	getPings,
+} from "../state/selectors";
 
 const LocationSelectPage = ({ config, onBack }) => {
-	const locations = useRecoilValue(getLocations);
+	const globalLocations = useRecoilValue(getLocations);
+
+	const paidLocationsMap = useRecoilValue(getPaidOptionLocationsMap);
+
+	const locations =
+		config.source === "paid_option"
+			? (paidLocationsMap?.[config.optionId] ?? [])
+			: globalLocations;
 
 	const [pings, setPings] = useRecoilState(getPings);
 
@@ -54,7 +65,8 @@ const LocationSelectPage = ({ config, onBack }) => {
 
 	const checkLocationPing = useCallback(
 		async (location) => {
-			if (!location || !location.ping_ip || !location.is_active) return;
+			if (!location || !location.ping_ip || location.is_active === false)
+				return;
 
 			const locationKey = `${location.id}_${location.ping_ip}`;
 
@@ -127,7 +139,7 @@ const LocationSelectPage = ({ config, onBack }) => {
 	}, [locations]);
 
 	const locationsKey = locations
-		?.filter((el) => el.is_active)
+		?.filter((el) => el.is_active !== false)
 		.map((l) => `${l.id}:${l.title}:${l.code}`)
 		.join("|");
 
@@ -135,7 +147,7 @@ const LocationSelectPage = ({ config, onBack }) => {
 		if (!locations || locations.length === 0) return [];
 
 		return locations
-			.filter((el) => el.is_active)
+			.filter((el) => el.is_active !== false)
 			.map(({ id, title, description, code }) => ({
 				label: title,
 				value: String(id),

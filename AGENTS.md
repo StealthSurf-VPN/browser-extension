@@ -45,15 +45,18 @@ extension/
 │   │   │   ├── ConfigSelectPage.jsx # Config list with connect buttons and ping
 │   │   │   ├── LocationSelectPage.jsx # Location picker with ping measurement
 │   │   │   ├── SettingsPage.jsx     # Profile, proxy settings, useful links
-│   │   │   └── SplitTunnelPage.jsx  # Domain-based split tunneling (exclude/include)
+│   │   │   ├── FeedbackPage.jsx     # User feedback/idea submission form
+│   │   │   └── SplitTunnelPage.jsx  # Split tunneling: domains + IPv4/IPv6/CIDR (exclude/include)
 │   │   ├── hooks/
 │   │   │   ├── useExtAuth.js        # Auth check via storage listener
 │   │   │   ├── useProxyList.js      # Fetch + normalize configs from all sources
 │   │   │   ├── useProxyConnection.js # connect/disconnect/restore via background
 │   │   │   ├── useLoadResources.js  # Parallel data loading with retry
+│   │   │   ├── useSplitTunnelSync.js # Account sync state machine (pull-on-mount, debounced push)
 │   │   │   └── useSnackbarHandler.js # Snackbar helper
 │   │   ├── components/
-│   │   │   └── ErrorBoundary.jsx    # Error boundary with key-based remount
+│   │   │   ├── ErrorBoundary.jsx    # Error boundary with key-based remount
+│   │   │   └── MainPageSkeleton.jsx # Loading skeleton for popup initial load
 │   │   └── state/
 │   │       ├── atoms.js             # extensionAtom, proxyAtom, resourcesAtom, pingsAtom
 │   │       └── selectors.js         # Read/write selectors
@@ -68,7 +71,9 @@ extension/
 │   │       ├── route.cloud-servers.js # getCloudServers
 │   │       ├── route.proxies.js     # getCloudServerProxies, createCloudServerProxy
 │   │       ├── route.locations.js   # getLocations
-│   │       └── route.profile.js     # getProfile
+│   │       ├── route.profile.js     # getProfile
+│   │       ├── route.profile-extension.js # split-tunnel account sync (GET/PUT)
+│   │       └── route.feedback.js    # sendFeedback (POST /feedback)
 │   ├── shared/
 │   │   ├── constants.js             # MSG types, STORAGE_KEYS, CACHE_TTL_MS
 │   │   ├── parseConnectionUrl.js    # protocol://user:pass@host:port → object
@@ -76,7 +81,9 @@ extension/
 │   │   ├── ping.js                  # measureBest via XHR to location ping_ip
 │   │   ├── getPingLabel.jsx         # Colored ping label component (JSX)
 │   │   ├── localizeDate.js          # Unix timestamp → Russian locale date string
-│   │   ├── countryFlag.js           # Country code → emoji flag
+│   │   ├── countryFlag.jsx          # Country code → CDN flag <img> (__CDN_DOMAIN__), 🌐 fallback
+│   │   ├── ipUtils.js               # IPv4/IPv6/CIDR parsing + matching (popup + Firefox)
+│   │   ├── pacIpHelpers.js          # ES5 PAC-safe IP helpers (inlined into PAC via ?raw)
 │   │   ├── pkce.js                  # PKCE code_verifier/code_challenge generation
 │   │   └── updateChecker.js         # GitHub Releases version checker (non-store)
 │   └── assets/
@@ -89,8 +96,8 @@ extension/
 ├── vite.config.mjs                  # Dual-entry build (popup + background)
 ├── package.json
 ├── biome.json
-├── .env.development
-└── .env.production
+├── .env                              # Local env (VITE_BACKEND_URL/CONSOLE_URL/CDN_DOMAIN)
+└── .env.example                      # Template for required env vars
 ```
 
 ## Architecture
@@ -162,14 +169,16 @@ Stored in `chrome.storage.local`:
 | `split_tunnel_mode` | `"exclude"` \| `"include"` | `"exclude"` |
 | `split_tunnel_domains` | `string[]` | `[]` |
 
-Applied on connect and on `MSG.UPDATE_PROXY_SETTINGS`. Both proxy implementations read settings from storage.
+Rules cover domains (wildcards via `*.example.com`), IPv4, IPv6, and CIDR ranges (parsed/matched in `shared/ipUtils.js`; Chrome PAC uses ES5-safe `shared/pacIpHelpers.js`). Applied on connect and on `MSG.UPDATE_PROXY_SETTINGS`. Both proxy implementations read settings from storage.
+
+**Account sync** — `useSplitTunnelSync` pulls rules on mount and pushes (debounced 500ms) on edit via `route.profile-extension.js` (`GET/PUT /profile/extension/split-tunnel`). Bookkeeping keys: `sync_routing` (enabled toggle), `sync_last_synced_at` (server `updated_at`), `sync_dirty` (pending local edits).
 
 ### Popup
 
 State-based navigation (Recoil atom), not URL router:
 
 ```text
-activePage: "main" | "configSelect" | "locationSelect" | "settings" | "splitTunnel"
+activePage: "main" | "configSelect" | "locationSelect" | "settings" | "splitTunnel" | "feedback"
 ```
 
 **MainPage** — power toggle, connection status with IP badge (external IP + country flag), config selector with ping, update banner.
@@ -178,9 +187,11 @@ activePage: "main" | "configSelect" | "locationSelect" | "settings" | "splitTunn
 
 **LocationSelectPage** — location picker with ping measurement.
 
-**SettingsPage** — user profile, proxy settings toggle, protocol selector (SOCKS5/HTTP, Firefox only, disabled while connected), useful links, legal info.
+**SettingsPage** — user profile, proxy settings toggle, protocol selector (SOCKS5/HTTP, Firefox only, disabled while connected), useful links, legal info, feedback entry.
 
-**SplitTunnelPage** — domain list editor with exclude/include mode switcher. Supports wildcards (`*.example.com`). Auto-strips protocols from pasted URLs.
+**SplitTunnelPage** — rule editor with exclude/include mode switcher. Supports domains with wildcards (`*.example.com`), IPv4/IPv6/CIDR, `.txt` import/export, and account sync. Auto-strips protocols from pasted URLs.
+
+**FeedbackPage** — feedback/idea submission form (`POST /feedback`, 1–4000 chars).
 
 ### Data Flow
 
@@ -270,13 +281,19 @@ Firefox GitHub builds (`manifest.firefox.github.json`) have `update_url` pointin
 ```bash
 npm install
 npm run format
+npm run lint                  # Biome lint
 npm run build:chrome          # → dist/chrome/
 npm run build:firefox         # → dist/firefox/ (AMO variant)
 npm run build:firefox:github  # → dist/firefox/ (GitHub variant, with update_url)
 npm run build:all             # Both platforms (AMO)
 npm run build:all:github      # Both platforms (GitHub)
-npm run release               # Build + package (ZIP, CRX, XPI)
+npm run lint:firefox          # Rebuild AMO Firefox + web-ext lint
+npm run pack:all              # Package ZIP + CRX + XPI
+npm run release:store         # build:all + pack:all (stores AMO/CWS)
+npm run release:github        # build:all:github + pack:all (GitHub)
 ```
+
+**Environment** — Vite reads `.env` (template: `.env.example`). Required vars, build throws if missing: `VITE_BACKEND_URL`, `VITE_CONSOLE_URL`, `VITE_CDN_DOMAIN`. Injected as defines: `__BACKEND_URL__`, `__CONSOLE_URL__`, `__CDN_DOMAIN__`, and `__IS_FIREFOX__` (from `VITE_TARGET`).
 
 ## State Persistence
 
@@ -298,3 +315,6 @@ All persistent state in `chrome.storage.local`:
 | `oauth_code_verifier` | PKCE code_verifier (Firefox, temporary) |
 | `oauth_redirect_uri` | OAuth redirect URI (Firefox, temporary) |
 | `selected_config` | Last selected config `{ id, source }` (popup state persistence) |
+| `sync_routing` | Boolean — account sync enabled (default true) |
+| `sync_last_synced_at` | Server `updated_at` of last successful split-tunnel sync |
+| `sync_dirty` | Boolean — local split-tunnel edits pending push |

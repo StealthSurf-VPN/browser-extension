@@ -44,7 +44,9 @@ npm run release:store    # Full release for stores AMO/CWS (build:all + pack:all
 - `src/popup/pages/SettingsPage.jsx` — Profile, settings, protocol selector (SOCKS5/HTTP, Firefox only)
 - `src/popup/pages/SplitTunnelPage.jsx` — Split tunneling: domains, IPv4/IPv6/CIDR, .txt import/export, account sync
 - `src/popup/pages/AuthPage.jsx` — PKCE OAuth login
+- `src/popup/pages/FeedbackPage.jsx` — Feedback/idea submission form (POST /feedback)
 - `src/popup/components/ErrorBoundary.jsx` — Error boundary with key-based remount
+- `src/popup/components/MainPageSkeleton.jsx` — Loading skeleton for popup initial load
 - `src/popup/hooks/useProxyConnection.js` — Connect/disconnect with credential validation + protocol from storage
 - `src/popup/hooks/useProxyList.js` — Data fetching and normalization
 - `src/popup/hooks/useLoadResources.js` — Parallel data loading with retry
@@ -53,12 +55,14 @@ npm run release:store    # Full release for stores AMO/CWS (build:all + pack:all
 - `src/popup/state/atoms.js` — Recoil atoms (extension, proxy, resources, pings)
 - `src/api/api.instance.js` — Axios with chrome.storage tokens + refresh timeout
 - `src/api/routes/route.profile-extension.js` — Account sync endpoints (GET/PUT /profile/extension/split-tunnel)
+- `src/api/routes/route.feedback.js` — sendFeedback (POST /feedback)
 - `src/shared/constants.js` — Message types, storage keys
 - `src/shared/ipUtils.js` — IPv4/IPv6/CIDR parsing + matching (popup + Firefox listener)
 - `src/shared/pacIpHelpers.js` — ES5 PAC-safe IP helpers (inlined into PAC via Vite `?raw`)
 - `src/shared/updateChecker.js` — GitHub Releases version checker (requires management permission)
 - `src/shared/ping.js` — Ping measurement via XHR
 - `src/shared/getPingLabel.jsx` — Colored ping label JSX component
+- `src/shared/countryFlag.jsx` — Country code → CDN flag image (`__CDN_DOMAIN__`)
 - `src/shared/pkce.js` — PKCE challenge/verifier generation
 - `vite.config.mjs` — Dual-entry build configuration
 

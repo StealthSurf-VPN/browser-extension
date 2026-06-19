@@ -27,6 +27,7 @@ export const resourcesAtom = atom({
 	default: {
 		configs: null,
 		paidOptions: null,
+		paidOptionLocations: null,
 		cloudServers: null,
 		locations: null,
 		profile: null,

@@ -4,6 +4,7 @@ import {
 	Icon24BroadcastOutline,
 	Icon24CopyOutline,
 	Icon24DocumentTextOutline,
+	Icon24LightbulbOutline,
 	Icon24MessagesOutline,
 	Icon24RobotOutline,
 	Icon24StarsOutline,
@@ -81,12 +82,18 @@ const usefulLinks = [
 	},
 ];
 
-const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
+const SettingsPage = ({
+	onBack,
+	onLogout,
+	setPopout,
+	loading,
+	onOpenFeedback,
+}) => {
 	const userData = useRecoilValue(getProfileData);
 
 	const showSnackbar = useSnackbarHandler();
 
-	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.14";
+	const version = chrome.runtime.getManifest?.()?.version ?? "1.0.15";
 
 	const [proxyAllTraffic, setProxyAllTraffic] = useState(false);
 
@@ -382,6 +389,22 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 					</Card>
 
 					<Header mode="secondary" className="ext-settings__section-header">
+						Другое
+					</Header>
+
+					<Card>
+						<SimpleCell
+							subtitle="Поделитесь идеей или предложением"
+							multiline
+							expandable="always"
+							before={<Icon24LightbulbOutline />}
+							onClick={onOpenFeedback}
+						>
+							Предложить идею
+						</SimpleCell>
+					</Card>
+
+					<Header mode="secondary" className="ext-settings__section-header">
 						Правовая информация
 					</Header>
 
@@ -393,7 +416,7 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 							before={<Icon24DocumentTextOutline />}
 							onClick={() =>
 								chrome.tabs.create({
-									url: "https://storage.stealthsurf.net/terms-of-use.pdf",
+									url: "https://cdn.stealthsurf.net/legal/terms-of-use.pdf",
 								})
 							}
 						>
@@ -406,7 +429,7 @@ const SettingsPage = ({ onBack, onLogout, setPopout, loading }) => {
 							before={<Icon28PrivacyOutline width={24} height={24} />}
 							onClick={() =>
 								chrome.tabs.create({
-									url: "https://storage.stealthsurf.net/privacy-policy.pdf",
+									url: "https://cdn.stealthsurf.net/legal/privacy-policy.pdf",
 								})
 							}
 						>

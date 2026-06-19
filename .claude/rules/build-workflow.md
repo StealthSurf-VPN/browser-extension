@@ -55,7 +55,9 @@ Key settings:
 
 - `base: "./"` — relative paths for extension compatibility
 - `target: "esnext"` — modern JS for extension environments
-- `define: { __BACKEND_URL__ }` — injected at build time from `.env`
+- `define` — injects `__BACKEND_URL__`, `__CONSOLE_URL__`, `__CDN_DOMAIN__` (from `.env`) and `__IS_FIREFOX__` (from `VITE_TARGET`)
+
+Required env vars (build throws if missing): `VITE_BACKEND_URL`, `VITE_CONSOLE_URL`, `VITE_CDN_DOMAIN`. Template: `.env.example`.
 
 ## Manifests
 

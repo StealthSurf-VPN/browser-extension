@@ -4,6 +4,13 @@ import { NETWORK } from "../api.instance";
 export const getPaidOptions = () => NETWORK.get("paid-options");
 
 /**
+ * @param {number} paidOptionId - Paid option ID (option_id)
+ * @returns {Promise<import("axios").AxiosResponse>} Curated locations available for the paid option
+ */
+export const getPaidOptionLocations = (paidOptionId) =>
+	NETWORK.get(`paid-options/${paidOptionId}/locations`);
+
+/**
  * @param {number} paidOptionId - Paid option ID
  * @param {number} configId - Config ID within the paid option
  * @returns {Promise<import("axios").AxiosResponse>} proxy subconfig details

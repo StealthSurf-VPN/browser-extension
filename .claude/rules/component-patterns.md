@@ -16,6 +16,7 @@ Navigation is state-based:
 {activePage === "locationSelect" && <LocationSelectPage />}
 {activePage === "settings" && <SettingsPage />}
 {activePage === "splitTunnel" && <SplitTunnelPage />}
+{activePage === "feedback" && <FeedbackPage />}
 ```
 
 ## VK UI Usage
@@ -51,16 +52,20 @@ User profile with ID and balance, "Proxy all traffic" toggle, protocol selector 
 
 ### SplitTunnelPage
 
-Domain-based split tunneling with two modes:
+Split tunneling with two modes:
 
-- **Exclude**: all traffic proxied except listed domains
-- **Include**: only listed domains proxied
+- **Exclude**: all traffic proxied except listed rules
+- **Include**: only listed rules proxied
 
-Features: SegmentedControl for mode, input with add button, domain list with delete, wildcard support (`*.example.com`), auto-strip protocol from pasted URLs.
+Rules: domains (wildcard `*.example.com`), IPv4/IPv6/CIDR. Features: SegmentedControl for mode, input with add button, rule list with delete, `.txt` import/export, account sync via `useSplitTunnelSync`, auto-strip protocol from pasted URLs.
 
 ### AuthPage
 
 PKCE OAuth login — opens main site for authentication.
+
+### FeedbackPage
+
+Feedback/idea submission form. Textarea (1–4000 chars) → `sendFeedback` (`POST /feedback`). Opened from SettingsPage via `onOpenFeedback`.
 
 ## Hooks
 
@@ -102,6 +107,10 @@ Parallel loading of configs, paid options, cloud servers, locations, and profile
 
 Helper for snackbar notifications via notistack.
 
+### useSplitTunnelSync
+
+Account sync state machine for split-tunnel rules: pulls on mount, pushes (debounced 500ms) on edit via `route.profile-extension.js`. Conflict resolution by server `updated_at` vs `sync_last_synced_at`; `sync_dirty` flags pending local edits.
+
 ## Ping Display
 
 Colored ping measurement using `shared/ping.js` and `shared/getPingLabel.jsx`:
@@ -120,6 +129,10 @@ ConfigSelectPage measures all unique `locationRealId` locations. MainPage measur
 
 - Shows error message with retry button
 - Uses key-based remount (`resetKey` counter) to force full re-render on retry
+
+## Loading Skeleton
+
+`src/popup/components/MainPageSkeleton.jsx` renders while auth state resolves (`isLoading` in `App.jsx`), using VK UI `Skeleton` placeholders instead of a spinner.
 
 ## File Naming
 

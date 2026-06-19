@@ -15,12 +15,17 @@ export default ({ mode }) => {
 		throw new Error("VITE_CONSOLE_URL is not defined in .env");
 	}
 
+	if (!env.VITE_CDN_DOMAIN) {
+		throw new Error("VITE_CDN_DOMAIN is not defined in .env");
+	}
+
 	return defineConfig({
 		plugins: [react()],
 		base: "./",
 		define: {
 			__BACKEND_URL__: JSON.stringify(env.VITE_BACKEND_URL),
 			__CONSOLE_URL__: JSON.stringify(env.VITE_CONSOLE_URL),
+			__CDN_DOMAIN__: JSON.stringify(env.VITE_CDN_DOMAIN),
 			__IS_FIREFOX__: target === "firefox",
 		},
 		build: {

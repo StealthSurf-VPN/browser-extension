@@ -83,7 +83,11 @@ const handlers = {
 	[MSG.AUTH_CLEAR]: async () => {
 		await clearTokens();
 		await disconnect();
-		await storage.remove(STORAGE_KEYS.CONNECTED_CONFIG);
+		await storage.remove([
+			STORAGE_KEYS.CONNECTED_CONFIG,
+			STORAGE_KEYS.PROXY_LIST_CACHE,
+			STORAGE_KEYS.PROXY_LIST_CACHE_TIME,
+		]);
 		return { success: true };
 	},
 

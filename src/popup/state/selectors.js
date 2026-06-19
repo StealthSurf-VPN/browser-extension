@@ -34,6 +34,13 @@ export const getPaidOptions = selector({
 		set(resourcesAtom, (old) => ({ ...old, paidOptions })),
 });
 
+export const getPaidOptionLocationsMap = selector({
+	key: "getPaidOptionLocationsMap",
+	get: ({ get }) => get(resourcesAtom).paidOptionLocations,
+	set: ({ set }, paidOptionLocations) =>
+		set(resourcesAtom, (old) => ({ ...old, paidOptionLocations })),
+});
+
 export const getCloudServers = selector({
 	key: "getCloudServers",
 	get: ({ get }) => get(resourcesAtom).cloudServers,

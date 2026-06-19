@@ -161,7 +161,11 @@ const ConfigSelectPage = ({ locations, loading, error, reload, onBack }) => {
 										<SimpleCell
 											before={
 												<span className="ext-configs-grid__flag">
-													<CountryFlag code={loc?.code} size={24} />
+													<CountryFlag
+														code={loc?.code}
+														size={24}
+														loading={loading}
+													/>
 												</span>
 											}
 											subtitle={
