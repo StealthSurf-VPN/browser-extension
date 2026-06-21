@@ -13,6 +13,21 @@ export const NETWORK = axios.create({
 	},
 });
 
+const isFormDataPayload = (data) =>
+	typeof FormData !== "undefined" && data instanceof FormData;
+
+const removeContentTypeHeader = (headers) => {
+	if (!headers) return;
+
+	if (typeof headers.delete === "function") {
+		headers.delete("Content-Type");
+		return;
+	}
+
+	headers["Content-Type"] = undefined;
+	headers["content-type"] = undefined;
+};
+
 const getStoredTokens = async () => {
 	const data = await storage.get([
 		STORAGE_KEYS.ACCESS_TOKEN,
@@ -66,6 +81,8 @@ const doRefresh = async () => {
 const isAuthUrl = (url) => url === "auth" || url.startsWith("auth/");
 
 NETWORK.interceptors.request.use(async (config) => {
+	if (isFormDataPayload(config.data)) removeContentTypeHeader(config.headers);
+
 	if (isAuthUrl(config.url)) {
 		config.headers.Authorization = null;
 		return config;

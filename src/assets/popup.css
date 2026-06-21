@@ -828,3 +828,30 @@ body:has(.vkuiPopoutWrapper) {
 	opacity: 0.64;
 	pointer-events: none;
 }
+
+.ext-feedback-page__files {
+	overflow: hidden;
+	margin-bottom: 10px;
+}
+
+.ext-feedback-page__files .vkuiSimpleCell__content {
+	min-width: 0;
+}
+
+.ext-feedback-page__file-name {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ext-feedback-page__delete {
+	color: var(--vkui--color_icon_negative) !important;
+}
+
+.ext-feedback-page__actions {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
