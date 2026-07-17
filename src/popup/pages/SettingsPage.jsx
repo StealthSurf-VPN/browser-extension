@@ -31,6 +31,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { MSG, STORAGE_KEYS, sendMessage } from "../../shared/constants";
+import AppearanceSettings from "../components/AppearanceSettings";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
 import { useSplitTunnelSync } from "../hooks/useSplitTunnelSync";
 import { getProfileData, getProxyState } from "../state/selectors";
@@ -88,6 +89,12 @@ const SettingsPage = ({
 	setPopout,
 	loading,
 	onOpenFeedback,
+	interfaceTheme,
+	accentTheme,
+	customAccentColor,
+	onInterfaceThemeChange,
+	onAccentThemeChange,
+	onCustomAccentColorChange,
 }) => {
 	const userData = useRecoilValue(getProfileData);
 
@@ -219,6 +226,14 @@ const SettingsPage = ({
 			: (userData.uuid ?? userData.email)
 		: "";
 
+	const handleThemePreferenceChange = async (callback, value) => {
+		try {
+			await callback(value);
+		} catch {
+			showSnackbar("Не удалось сохранить тему");
+		}
+	};
+
 	return (
 		<Panel>
 			<PanelHeader
@@ -276,7 +291,13 @@ const SettingsPage = ({
 					)}
 
 					<div className="ext-settings__logout">
-						<Button size="l" mode="secondary" onClick={handleLogout} stretched>
+						<Button
+							className="settings-logout-button"
+							size="l"
+							mode="secondary"
+							onClick={handleLogout}
+							stretched
+						>
 							Выйти из аккаунта
 						</Button>
 					</div>
@@ -368,6 +389,25 @@ const SettingsPage = ({
 							</Card>
 						</>
 					)}
+
+					<Header mode="secondary" className="ext-settings__section-header">
+						Оформление
+					</Header>
+
+					<AppearanceSettings
+						interfaceTheme={interfaceTheme}
+						accentTheme={accentTheme}
+						customAccentColor={customAccentColor}
+						onInterfaceThemeChange={(value) =>
+							handleThemePreferenceChange(onInterfaceThemeChange, value)
+						}
+						onAccentChange={(value) =>
+							handleThemePreferenceChange(onAccentThemeChange, value)
+						}
+						onCustomAccentColorChange={(value) =>
+							handleThemePreferenceChange(onCustomAccentColorChange, value)
+						}
+					/>
 
 					<Header mode="secondary" className="ext-settings__section-header">
 						Полезные ссылки

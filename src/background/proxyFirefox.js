@@ -1,4 +1,5 @@
 import { STORAGE_KEYS, toBadgeCode } from "../shared/constants";
+import { BACKEND_URLS } from "../shared/backendFallback";
 import { parseRule, matchRule } from "../shared/ipUtils.js";
 
 let proxyConfig = null;
@@ -59,9 +60,11 @@ const emptySet = new Set();
 const buildBypassHosts = () => {
 	const hosts = new Set();
 
-	try {
-		hosts.add(new URL(__BACKEND_URL__).hostname);
-	} catch {}
+	for (const backendUrl of BACKEND_URLS) {
+		try {
+			hosts.add(new URL(backendUrl).hostname);
+		} catch {}
+	}
 
 	try {
 		hosts.add(new URL(__CONSOLE_URL__).hostname);

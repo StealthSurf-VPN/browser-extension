@@ -68,11 +68,7 @@ const FeedbackPage = ({ onBack }) => {
 
 	const showSnackbar = useSnackbarHandler();
 
-	const handleFileSelect = (e) => {
-		const selected = Array.from(e.target.files ?? []);
-
-		e.target.value = "";
-
+	const addFiles = (selected) => {
 		if (!selected.length) return;
 
 		const availableSlots = MAX_FILES - files.length;
@@ -101,6 +97,22 @@ const FeedbackPage = ({ onBack }) => {
 		if (!toAdd.length) return;
 
 		setFiles((current) => [...current, ...toAdd]);
+	};
+
+	const handleFileSelect = (e) => {
+		const selected = Array.from(e.target.files ?? []);
+
+		e.target.value = "";
+		addFiles(selected);
+	};
+
+	const handlePaste = (e) => {
+		const pasted = Array.from(e.clipboardData.files ?? []);
+
+		if (!pasted.length) return;
+
+		e.preventDefault();
+		addFiles(pasted);
 	};
 
 	const removeFile = (indexToRemove) =>
@@ -152,7 +164,7 @@ const FeedbackPage = ({ onBack }) => {
 				Предложить идею
 			</PanelHeader>
 			<Group>
-				<div className="ext-settings__content">
+				<div className="ext-settings__content" onPaste={handlePaste}>
 					<Card>
 						<Div>
 							<Text className="ext-text--muted">
@@ -160,8 +172,8 @@ const FeedbackPage = ({ onBack }) => {
 								учитываем его при развитии сервиса.
 								<br />
 								<br />
-								Можно прикрепить до {MAX_FILES} файлов, не более{" "}
-								{MAX_FILE_SIZE_LABEL} каждый.
+								Можно выбрать или вставить из буфера до {MAX_FILES} файлов, не
+								более {MAX_FILE_SIZE_LABEL} каждый.
 							</Text>
 						</Div>
 					</Card>

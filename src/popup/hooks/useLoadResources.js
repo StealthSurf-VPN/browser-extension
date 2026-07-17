@@ -157,6 +157,7 @@ const useLoadResources = (isAuthenticated) => {
 
 			console.error("Failed to load resources:", err);
 			setError(err.message ?? "Ошибка загрузки");
+			throw err;
 		} finally {
 			if (loadIdRef.current === currentId) setLoading(false);
 		}
@@ -193,9 +194,10 @@ const useLoadResources = (isAuthenticated) => {
 				applyBundle(bundle);
 				setLoading(false);
 
-				if (Date.now() - cachedAt >= RESOURCE_REVALIDATE_MS) revalidate();
+				if (Date.now() - cachedAt >= RESOURCE_REVALIDATE_MS)
+					void revalidate().catch(() => {});
 			} else {
-				revalidate();
+				void revalidate().catch(() => {});
 			}
 		})();
 

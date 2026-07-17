@@ -2,20 +2,39 @@ import { AppRoot, ConfigProvider } from "@vkontakte/vkui";
 import "@vkontakte/vkui/dist/vkui.css";
 import { SnackbarProvider } from "notistack";
 import React, { useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRecoilValue } from "recoil";
+import {
+	getAccentThemeStyle,
+	normalizeAccentTheme,
+	normalizeCustomAccentColor,
+} from "../shared/accentThemes";
+import { STORAGE_KEYS } from "../shared/constants";
+import { normalizeInterfaceTheme } from "../shared/interfaceThemes";
 import ErrorBoundary from "./components/ErrorBoundary";
+import GeminiAccent from "./components/GeminiAccent";
 import MainPageSkeleton from "./components/MainPageSkeleton";
 import useExtAuth from "./hooks/useExtAuth";
 import useLoadResources from "./hooks/useLoadResources";
 import AuthPage from "./pages/AuthPage";
-import ConfigSelectPage from "./pages/ConfigSelectPage";
 import FeedbackPage from "./pages/FeedbackPage";
-import LocationSelectPage from "./pages/LocationSelectPage";
 import MainPage from "./pages/MainPage";
 import SettingsPage from "./pages/SettingsPage";
 import SplitTunnelPage from "./pages/SplitTunnelPage";
 import { getLocations, getPaidOptionLocationsMap } from "./state/selectors";
 import "../assets/popup.css";
+
+const storage = (globalThis.browser?.storage || chrome.storage).local;
+
+const getSystemAppearance = () => {
+	try {
+		return window.matchMedia("(prefers-color-scheme: dark)").matches
+			? "dark"
+			: "light";
+	} catch {
+		return "light";
+	}
+};
 
 const detectPlatform = () => {
 	const ua = navigator.userAgent;
@@ -26,7 +45,7 @@ const detectPlatform = () => {
 	return "android";
 };
 
-const App = () => {
+const App = ({ initialThemePreferences }) => {
 	const { isAuthenticated, isLoading, logout, openLogin } = useExtAuth();
 
 	const {
@@ -62,41 +81,74 @@ const App = () => {
 
 	const [activePage, setActivePage] = useState("main");
 
-	const [selectedConfig, setSelectedConfig] = useState(null);
-
-	const [locationBackPage, setLocationBackPage] = useState("configSelect");
-
 	const [popout, setPopout] = useState(null);
 
-	const [theme, setTheme] = useState(
-		window.matchMedia("(prefers-color-scheme: dark)").matches
-			? "dark"
-			: "light",
+	const [isScrolled, setIsScrolled] = useState(false);
+
+	const [systemTheme, setSystemTheme] = useState(getSystemAppearance);
+
+	const [interfaceTheme, setInterfaceTheme] = useState(
+		initialThemePreferences.interfaceTheme,
 	);
 
+	const [accentTheme, setAccentTheme] = useState(
+		initialThemePreferences.accentTheme,
+	);
+
+	const [customAccentColor, setCustomAccentColor] = useState(
+		initialThemePreferences.customAccentColor,
+	);
+
+	const theme = interfaceTheme === "system" ? systemTheme : interfaceTheme;
+
+	const accentStyle = useMemo(
+		() => getAccentThemeStyle(accentTheme, theme, customAccentColor),
+		[accentTheme, customAccentColor, theme],
+	);
+
+	const isGeminiAccent = accentTheme === "gemini";
+
+	const isDefaultAccent = accentTheme === "stealthsurf";
+
 	useEffect(() => {
-		const mq = window.matchMedia("(prefers-color-scheme: dark)");
+		const root = document.documentElement;
+		const rootStyle = root.style;
+		const accentProperties = Object.keys(accentStyle ?? {});
 
-		const handler = (e) => setTheme(e.matches ? "dark" : "light");
+		for (const property of accentProperties) {
+			const value = accentStyle[property];
 
-		mq.addEventListener("change", handler);
+			rootStyle.setProperty(property, value);
+		}
 
-		return () => mq.removeEventListener("change", handler);
+		root.classList.toggle("ext-app-accent--gemini", isGeminiAccent);
+
+		return () => {
+			for (const property of accentProperties)
+				rootStyle.removeProperty(property);
+
+			root.classList.remove("ext-app-accent--gemini");
+		};
+	}, [accentStyle, isGeminiAccent]);
+
+	useEffect(() => {
+		let mediaQuery;
+
+		const handleChange = (event) =>
+			setSystemTheme(event.matches ? "dark" : "light");
+
+		try {
+			mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+			mediaQuery.addEventListener("change", handleChange);
+		} catch {}
+
+		return () => mediaQuery?.removeEventListener("change", handleChange);
 	}, []);
 
 	const platform = useMemo(() => detectPlatform(), []);
 
-	const handleOpenConfigSelect = () => setActivePage("configSelect");
-
-	const handleOpenLocationSelect = (config, backTo = "configSelect") => {
-		setSelectedConfig(config);
-		setLocationBackPage(backTo);
-		setActivePage("locationSelect");
-	};
-
 	const handleBack = () => {
 		setActivePage("main");
-		setSelectedConfig(null);
 	};
 
 	const handleLogout = () => {
@@ -105,31 +157,41 @@ const App = () => {
 		setActivePage("main");
 	};
 
+	const handleInterfaceThemeChange = async (value) => {
+		const nextTheme = normalizeInterfaceTheme(value);
+		const applyTheme = () => setInterfaceTheme(nextTheme);
+		const prefersReducedMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
+
+		if (
+			typeof document.startViewTransition === "function" &&
+			!prefersReducedMotion
+		)
+			document.startViewTransition(() => flushSync(applyTheme));
+		else applyTheme();
+
+		await storage.set({ [STORAGE_KEYS.INTERFACE_THEME]: nextTheme });
+	};
+
+	const handleAccentThemeChange = async (value) => {
+		const nextTheme = normalizeAccentTheme(value);
+
+		setAccentTheme(nextTheme);
+		await storage.set({ [STORAGE_KEYS.ACCENT_THEME]: nextTheme });
+	};
+
+	const handleCustomAccentColorChange = async (value) => {
+		const nextColor = normalizeCustomAccentColor(value);
+
+		setCustomAccentColor(nextColor);
+		await storage.set({ [STORAGE_KEYS.CUSTOM_ACCENT_COLOR]: nextColor });
+	};
+
 	const renderPage = () => {
 		if (isLoading) return <MainPageSkeleton />;
 
 		if (!isAuthenticated) return <AuthPage onLogin={openLogin} />;
-
-		if (activePage === "configSelect") {
-			return (
-				<ConfigSelectPage
-					locations={combinedLocations}
-					loading={resourcesLoading}
-					error={resourcesError}
-					reload={reloadResources}
-					onBack={handleBack}
-				/>
-			);
-		}
-
-		if (activePage === "locationSelect" && selectedConfig) {
-			return (
-				<LocationSelectPage
-					config={selectedConfig}
-					onBack={() => setActivePage(locationBackPage)}
-				/>
-			);
-		}
 
 		if (activePage === "splitTunnel") {
 			return <SplitTunnelPage onBack={handleBack} />;
@@ -139,6 +201,12 @@ const App = () => {
 			return (
 				<SettingsPage
 					loading={resourcesLoading}
+					interfaceTheme={interfaceTheme}
+					accentTheme={accentTheme}
+					customAccentColor={customAccentColor}
+					onInterfaceThemeChange={handleInterfaceThemeChange}
+					onAccentThemeChange={handleAccentThemeChange}
+					onCustomAccentColorChange={handleCustomAccentColorChange}
 					onBack={handleBack}
 					onLogout={handleLogout}
 					setPopout={setPopout}
@@ -153,30 +221,43 @@ const App = () => {
 
 		return (
 			<MainPage
-				onOpenConfigSelect={handleOpenConfigSelect}
 				onOpenSettings={() => setActivePage("settings")}
 				onOpenSplitTunnel={() => setActivePage("splitTunnel")}
-				onOpenLocationSelect={(config) =>
-					handleOpenLocationSelect(config, "main")
-				}
 				locations={combinedLocations}
 				loading={resourcesLoading}
+				error={resourcesError}
+				reload={reloadResources}
 			/>
 		);
 	};
 
 	return (
 		<ConfigProvider appearance={theme} platform={platform}>
-			<AppRoot>
-				<ErrorBoundary>
-					<SnackbarProvider
-						maxSnack={3}
-						anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-					>
-						{renderPage()}
-					</SnackbarProvider>
-					{popout}
-				</ErrorBoundary>
+			<AppRoot
+				style={accentStyle}
+				className={`ext-app-shell ${platform} theme-${theme}${isGeminiAccent ? " ext-app-accent--gemini" : ""}${isDefaultAccent ? " ext-app-accent--stealthsurf" : ""}${isScrolled ? " ext-app-shell--scrolled" : ""}`}
+				onScroll={(event) => setIsScrolled(event.currentTarget.scrollTop > 8)}
+			>
+				<GeminiAccent enabled={isGeminiAccent} />
+				<div
+					className="ext-app-shell__glow ext-app-shell__glow--left"
+					aria-hidden="true"
+				/>
+				<div
+					className="ext-app-shell__glow ext-app-shell__glow--right"
+					aria-hidden="true"
+				/>
+				<div className="ext-app-shell__content">
+					<ErrorBoundary>
+						<SnackbarProvider
+							maxSnack={3}
+							anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+						>
+							{renderPage()}
+						</SnackbarProvider>
+						{popout}
+					</ErrorBoundary>
+				</div>
 			</AppRoot>
 		</ConfigProvider>
 	);

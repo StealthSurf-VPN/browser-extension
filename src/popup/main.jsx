@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { RecoilRoot } from "recoil";
+import { loadThemePreferences } from "../shared/themePreferences";
 import App from "./App";
 
 if (/Android|Mobile/i.test(navigator.userAgent))
@@ -8,8 +9,15 @@ if (/Android|Mobile/i.test(navigator.userAgent))
 
 const root = createRoot(document.getElementById("root"));
 
-root.render(
-	<RecoilRoot>
-		<App />
-	</RecoilRoot>,
-);
+const renderApp = async () => {
+	const storage = globalThis.browser?.storage || chrome.storage;
+	const themePreferences = await loadThemePreferences(storage);
+
+	root.render(
+		<RecoilRoot>
+			<App initialThemePreferences={themePreferences} />
+		</RecoilRoot>,
+	);
+};
+
+renderApp();

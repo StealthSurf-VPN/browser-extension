@@ -7,6 +7,7 @@ const MainPageSkeleton = () => (
 		<div className="ext-header">
 			<div className="ext-header__logo">
 				<Icon28GlobeOutline
+					className="ext-app-accent-icon"
 					width={24}
 					height={24}
 					fill="var(--vkui--color_text_accent)"
@@ -43,10 +44,7 @@ const MainPageSkeleton = () => (
 
 			<Separator className="ext-bottom-card__separator" />
 
-			<div
-				className="ext-bottom-card__action"
-				style={{ display: "flex", alignItems: "center", padding: "0 16px" }}
-			>
+			<div className="ext-location-trigger" aria-hidden="true">
 				<Skeleton width={128} height={15} />
 			</div>
 		</div>

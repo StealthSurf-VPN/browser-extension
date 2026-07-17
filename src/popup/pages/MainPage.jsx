@@ -1,28 +1,31 @@
 import {
+	Icon20ChevronUp,
 	Icon24DownloadOutline,
 	Icon24GearOutline,
 	Icon24ShuffleOutline,
 	Icon28GlobeOutline,
 } from "@vkontakte/icons";
-import {
-	IconButton,
-	Separator,
-	SimpleCell,
-	Skeleton,
-	Spinner,
-} from "@vkontakte/vkui";
+import { IconButton, Separator, Skeleton, Spinner } from "@vkontakte/vkui";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useRecoilState } from "recoil";
-import { MSG, sendMessage, toBadgeCode } from "../../shared/constants";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import {
+	MSG,
+	STORAGE_KEYS,
+	sendMessage,
+	toBadgeCode,
+} from "../../shared/constants";
 import CountryFlag from "../../shared/countryFlag.jsx";
 import getPingLabel from "../../shared/getPingLabel";
 import localizeDate from "../../shared/localizeDate";
 import { measureBest } from "../../shared/ping";
 import { checkForUpdate } from "../../shared/updateChecker";
+import LocationPicker from "../components/LocationPicker";
 import useProxyConnection from "../hooks/useProxyConnection";
 import useSnackbarHandler from "../hooks/useSnackbarHandler";
 import useProxyList from "../hooks/useProxyList";
-import { getPings } from "../state/selectors";
+import { getPings, getProxyState } from "../state/selectors";
+
+const storage = (globalThis.browser?.storage || chrome.storage).local;
 
 const PowerIcon = ({ size = 48 }) => (
 	<svg
@@ -87,12 +90,12 @@ const fetchExternalIp = async (signal) => {
 };
 
 const MainPage = ({
-	onOpenConfigSelect,
 	onOpenSettings,
 	onOpenSplitTunnel,
-	onOpenLocationSelect,
 	locations,
 	loading,
+	error,
+	reload,
 }) => {
 	const { allItems } = useProxyList();
 
@@ -103,7 +106,13 @@ const MainPage = ({
 
 	const [pings, setPings] = useRecoilState(getPings);
 
+	const setProxyState = useSetRecoilState(getProxyState);
+
 	const [isToggling, setIsToggling] = useState(false);
+
+	const [isConfigListOpen, setIsConfigListOpen] = useState(false);
+
+	const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
 
 	const [externalIp, setExternalIp] = useState(null);
 
@@ -114,6 +123,8 @@ const MainPage = ({
 	const [updateInfo, setUpdateInfo] = useState(null);
 
 	const ipAbortRef = useRef(null);
+
+	const pingInFlightRef = useRef(new Set());
 
 	useEffect(() => {
 		checkForUpdate().then((info) => {
@@ -235,14 +246,52 @@ const MainPage = ({
 	useEffect(() => {
 		if (!displayRealLocation?.ping_ip) return;
 
-		const locId = displayRealLocation.id;
+		const locId = Number(displayRealLocation.id);
 
 		if (pings[locId] !== undefined) return;
 
-		measureBest(displayRealLocation.ping_ip, 3).then((ms) => {
-			if (ms !== null) setPings((prev) => ({ ...prev, [locId]: ms }));
-		});
-	}, [displayRealLocation?.id]);
+		if (pingInFlightRef.current.has(locId)) return;
+
+		pingInFlightRef.current.add(locId);
+
+		measureBest(displayRealLocation.ping_ip, 3)
+			.then((ms) => {
+				if (ms !== null) setPings((prev) => ({ ...prev, [locId]: ms }));
+			})
+			.finally(() => {
+				pingInFlightRef.current.delete(locId);
+			});
+	}, [displayRealLocation?.id, displayRealLocation?.ping_ip, pings, setPings]);
+
+	useEffect(() => {
+		if (!isConfigListOpen || !locations?.length || !allItems.length) return;
+
+		const uniqueRealIds = [
+			...new Set(
+				allItems.map((item) => Number(item.locationRealId)).filter(Boolean),
+			),
+		];
+
+		for (const realId of uniqueRealIds) {
+			if (pings[realId] !== undefined) continue;
+
+			if (pingInFlightRef.current.has(realId)) continue;
+
+			const location = locations.find((item) => Number(item.id) === realId);
+
+			if (!location?.ping_ip) continue;
+
+			pingInFlightRef.current.add(realId);
+
+			measureBest(location.ping_ip, 3)
+				.then((ms) => {
+					if (ms !== null) setPings((prev) => ({ ...prev, [realId]: ms }));
+				})
+				.finally(() => {
+					pingInFlightRef.current.delete(realId);
+				});
+		}
+	}, [allItems, isConfigListOpen, locations, pings, setPings]);
 
 	const ping = displayRealLocation
 		? (pings[displayRealLocation.id] ?? null)
@@ -270,6 +319,31 @@ const MainPage = ({
 		}
 	};
 
+	const handleConfigSelect = (item) => {
+		setProxyState((prev) => ({
+			...prev,
+			selectedConfigId: item.id,
+			selectedSource: item.source,
+		}));
+		storage.set({
+			[STORAGE_KEYS.SELECTED_CONFIG]: {
+				id: item.id,
+				source: item.source,
+			},
+		});
+		setIsConfigListOpen(false);
+	};
+
+	const handleConfigListToggle = () => {
+		setIsLocationPickerOpen(false);
+		setIsConfigListOpen((value) => !value);
+	};
+
+	const handleLocationPickerToggle = () => {
+		setIsConfigListOpen(false);
+		setIsLocationPickerOpen((value) => !value);
+	};
+
 	const pingLabel = getPingLabel(ping);
 
 	const showConfigureButton = displayConfig?.canChangeLocation;
@@ -279,6 +353,7 @@ const MainPage = ({
 			<div className="ext-header">
 				<div className="ext-header__logo">
 					<Icon28GlobeOutline
+						className="ext-app-accent-icon"
 						width={24}
 						height={24}
 						fill="var(--vkui--color_text_accent)"
@@ -358,8 +433,16 @@ const MainPage = ({
 				</div>
 			)}
 
-			<div className="ext-bottom-card">
-				<div className="ext-config-selector" onClick={onOpenConfigSelect}>
+			<div
+				className={`ext-bottom-card${isConfigListOpen ? " ext-bottom-card--open" : ""}${isLocationPickerOpen ? " ext-bottom-card--location-open" : ""}`}
+			>
+				<button
+					type="button"
+					className="ext-config-selector"
+					onClick={handleConfigListToggle}
+					aria-expanded={isConfigListOpen}
+					aria-controls="ext-config-list"
+				>
 					{loading && !displayConfig ? (
 						<div className="ext-config-selector__content">
 							<span className="ext-config-selector__flag">
@@ -369,6 +452,7 @@ const MainPage = ({
 								<Skeleton width={140} height={16} />
 								<Skeleton width={100} height={12} style={{ marginTop: 4 }} />
 							</div>
+							<Icon20ChevronUp className="ext-config-selector__chevron ext-app-accent-icon" />
 						</div>
 					) : displayConfig ? (
 						<div className="ext-config-selector__content">
@@ -390,31 +474,98 @@ const MainPage = ({
 									{pingLabel && <>, {pingLabel}</>}
 								</span>
 							</div>
-							<span className="ext-config-selector__chevron">›</span>
+							<Icon20ChevronUp className="ext-config-selector__chevron ext-app-accent-icon" />
 						</div>
 					) : (
 						<div className="ext-config-selector__content">
 							<span className="ext-config-selector__flag">🌐</span>
 							<span className="ext-config-selector__text">Выберите конфиг</span>
-							<span className="ext-config-selector__chevron">›</span>
+							<Icon20ChevronUp className="ext-config-selector__chevron ext-app-accent-icon" />
 						</div>
+					)}
+				</button>
+
+				<div
+					id="ext-config-list"
+					className="ext-config-list"
+					aria-hidden={!isConfigListOpen}
+					inert={isConfigListOpen ? undefined : ""}
+				>
+					{loading && !allItems.length ? (
+						<div className="ext-config-list__loading">
+							<Spinner size="small" />
+							<span>Загрузка конфигов…</span>
+						</div>
+					) : error && !allItems.length ? (
+						<button
+							type="button"
+							className="ext-config-list__error"
+							onClick={() => void reload().catch(() => {})}
+						>
+							<span>Не удалось загрузить конфиги</span>
+							<span className="ext-config-list__retry">
+								Нажмите, чтобы повторить
+							</span>
+						</button>
+					) : allItems.length === 0 ? (
+						<div className="ext-config-list__empty">Нет доступных конфигов</div>
+					) : (
+						allItems.map((item) => {
+							const location = getLocation(item.locationId);
+							const itemPingLabel = getPingLabel(pings[item.locationRealId]);
+							const isActive =
+								displayConfig?.id === item.id &&
+								displayConfig?.source === item.source;
+
+							return (
+								<button
+									key={`${item.source}-${item.id}`}
+									type="button"
+									className={`ext-config-item${isActive ? " ext-config-item--active" : ""}`}
+									onClick={() => handleConfigSelect(item)}
+									aria-pressed={isActive}
+								>
+									<span className="ext-config-item__flag">
+										<CountryFlag
+											code={location?.code}
+											size={28}
+											loading={loading}
+										/>
+									</span>
+									<span className="ext-config-item__info">
+										<span className="ext-config-item__name">
+											{item.title ?? location?.title ?? "Неизвестный конфиг"}
+										</span>
+										<span className="ext-config-item__location">
+											До {localizeDate(item.expiresAt)}
+											{itemPingLabel && <>, {itemPingLabel}</>}
+										</span>
+									</span>
+								</button>
+							);
+						})
 					)}
 				</div>
 
 				{showConfigureButton && (
 					<>
 						<Separator className="ext-bottom-card__separator" />
-						<SimpleCell
-							className="ext-bottom-card__action"
-							onClick={() => onOpenLocationSelect(displayConfig)}
-							after={
-								<span className="ext-config-selector__chevron ext-change-location-banner__arrow">
-									›
-								</span>
-							}
+						<button
+							type="button"
+							className="ext-location-trigger"
+							onClick={handleLocationPickerToggle}
+							aria-expanded={isLocationPickerOpen}
+							aria-controls="ext-location-picker"
 						>
-							Изменить локацию
-						</SimpleCell>
+							<span>Изменить локацию</span>
+							<Icon20ChevronUp className="ext-location-trigger__chevron ext-app-accent-icon" />
+						</button>
+						<LocationPicker
+							config={displayConfig}
+							isOpen={isLocationPickerOpen}
+							onClose={() => setIsLocationPickerOpen(false)}
+							reload={reload}
+						/>
 					</>
 				)}
 			</div>

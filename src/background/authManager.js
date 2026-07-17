@@ -1,4 +1,10 @@
 import { CLIENT_ID, STORAGE_KEYS } from "../shared/constants";
+import {
+	fetchWithBackendTimeout,
+	getActiveBackendUrl,
+	isBackendUnavailable,
+	recheckPrimaryBackend,
+} from "../shared/backendFallback";
 import getCurrentTimestamp from "../shared/getCurrentTimestamp";
 import { generateCodeChallenge, generateCodeVerifier } from "../shared/pkce";
 
@@ -6,7 +12,34 @@ const isFirefox = typeof globalThis.browser?.runtime?.getURL === "function";
 
 const storage = (globalThis.browser?.storage || chrome.storage).local;
 
-const backendUrl = __BACKEND_URL__.replace(/\/+$/, "") + "/";
+const requestToken = async (body) => {
+	const activeBackendUrl = await getActiveBackendUrl();
+
+	void recheckPrimaryBackend(activeBackendUrl);
+
+	const request = async (backendUrl) => {
+		const response = await fetchWithBackendTimeout(
+			`${backendUrl}auth/connect/token`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			},
+			30000,
+		);
+
+		if (isBackendUnavailable({ status: response.status })) {
+			const error = new Error(`Backend HTTP error: ${response.status}`);
+
+			error.status = response.status;
+			throw error;
+		}
+
+		return response;
+	};
+
+	return request(activeBackendUrl);
+};
 
 /**
  * Read access and refresh tokens from storage.
@@ -77,14 +110,10 @@ const doRefreshAccessToken = async () => {
 	}
 
 	try {
-		const response = await fetch(`${backendUrl}auth/connect/token`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				grant_type: "refresh_token",
-				refresh_token: refreshToken.token,
-				client_id: CLIENT_ID,
-			}),
+		const response = await requestToken({
+			grant_type: "refresh_token",
+			refresh_token: refreshToken.token,
+			client_id: CLIENT_ID,
 		});
 
 		if (!response.ok) {
@@ -148,16 +177,12 @@ const buildAuthUrl = (codeChallenge, redirectUri) => {
  * @returns {Promise<{ access_token: object, refresh_token: object }>} Token pair
  */
 const exchangeCode = async (code, codeVerifier, redirectUri) => {
-	const response = await fetch(`${backendUrl}auth/connect/token`, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			grant_type: "authorization_code",
-			code,
-			code_verifier: codeVerifier,
-			client_id: CLIENT_ID,
-			redirect_uri: redirectUri,
-		}),
+	const response = await requestToken({
+		grant_type: "authorization_code",
+		code,
+		code_verifier: codeVerifier,
+		client_id: CLIENT_ID,
+		redirect_uri: redirectUri,
 	});
 
 	if (!response.ok)

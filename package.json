@@ -1,6 +1,6 @@
 {
 	"name": "stealthsurf-extension",
-	"version": "1.0.16",
+	"version": "1.0.17",
 	"description": "StealthSurf browser extension — HTTP proxy for Chrome and Firefox. Use your proxies, split tunneling, and more without installing VPN.",
 	"author": {
 		"name": "StealthSurf VPN",
@@ -29,6 +29,7 @@
 		"node": ">=18.0.0"
 	},
 	"scripts": {
+		"check:theme": "node --experimental-default-type=module scripts/theme.check.mjs",
 		"dev:chrome": "VITE_TARGET=chrome vite build --watch",
 		"dev:firefox": "VITE_TARGET=firefox vite build --watch",
 		"build:chrome": "VITE_TARGET=chrome vite build && cp manifest/manifest.chrome.json dist/chrome/manifest.json && cp -r src/assets/icons dist/chrome/ && cp src/callback/callback.html src/callback/callback.js dist/chrome/",

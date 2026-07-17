@@ -24,6 +24,9 @@ export default ({ mode }) => {
 		base: "./",
 		define: {
 			__BACKEND_URL__: JSON.stringify(env.VITE_BACKEND_URL),
+			__ALTERNATIVE_BACKEND_URL__: JSON.stringify(
+				env.VITE_ALTERNATIVE_BACKEND_URL || env.VITE_BACKEND_URL,
+			),
 			__CONSOLE_URL__: JSON.stringify(env.VITE_CONSOLE_URL),
 			__CDN_DOMAIN__: JSON.stringify(env.VITE_CDN_DOMAIN),
 			__IS_FIREFOX__: target === "firefox",

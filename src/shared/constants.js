@@ -32,6 +32,10 @@ export const STORAGE_KEYS = {
 	SYNC_ROUTING: "sync_routing",
 	SYNC_LAST_SYNCED_AT: "sync_last_synced_at",
 	SYNC_DIRTY: "sync_dirty",
+	INTERFACE_THEME: "interface_theme",
+	ACCENT_THEME: "accent_theme",
+	CUSTOM_ACCENT_COLOR: "custom_accent_color",
+	ACTIVE_BACKEND_URL: "active_backend_url",
 };
 
 export const CACHE_TTL_MS = 5 * 60 * 1000;

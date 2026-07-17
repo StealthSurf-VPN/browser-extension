@@ -1,11 +1,17 @@
 import axios from "axios";
+import {
+	PRIMARY_BACKEND_URL,
+	getActiveBackendUrl,
+	recheckPrimaryBackend,
+	retryWithFallbackBackend,
+} from "../shared/backendFallback";
 import { MSG, STORAGE_KEYS, sendMessage } from "../shared/constants";
 import getCurrentTimestamp from "../shared/getCurrentTimestamp";
 
 const storage = (globalThis.browser?.storage || chrome.storage).local;
 
 export const NETWORK = axios.create({
-	baseURL: __BACKEND_URL__,
+	baseURL: PRIMARY_BACKEND_URL,
 	timeout: 30000,
 	validateStatus: (status) => status < 500,
 	headers: {
@@ -81,6 +87,13 @@ const doRefresh = async () => {
 const isAuthUrl = (url) => url === "auth" || url.startsWith("auth/");
 
 NETWORK.interceptors.request.use(async (config) => {
+	if (!config.__isRetryAfterBackendFallback) {
+		const activeBackendUrl = await getActiveBackendUrl();
+
+		config.baseURL = activeBackendUrl;
+		void recheckPrimaryBackend(activeBackendUrl);
+	}
+
 	if (isFormDataPayload(config.data)) removeContentTypeHeader(config.headers);
 
 	if (isAuthUrl(config.url)) {
@@ -147,5 +160,26 @@ NETWORK.interceptors.response.use(
 
 		return response;
 	},
-	(error) => Promise.reject(error),
+	async (error) => {
+		const config = error.config;
+
+		if (!config || config.__isRetryAfterBackendFallback) {
+			return Promise.reject(error);
+		}
+
+		try {
+			return await retryWithFallbackBackend(
+				config.baseURL,
+				error,
+				config.method,
+				async (fallbackUrl) => {
+					config.baseURL = fallbackUrl;
+					config.__isRetryAfterBackendFallback = true;
+					return NETWORK(config);
+				},
+			);
+		} catch (fallbackError) {
+			return Promise.reject(fallbackError);
+		}
+	},
 );

@@ -1,4 +1,5 @@
 import { STORAGE_KEYS, toBadgeCode } from "../shared/constants";
+import { BACKEND_URLS } from "../shared/backendFallback";
 import pacIpHelpersSource from "../shared/pacIpHelpers.js?raw";
 import { parseRule, parseIPv6 } from "../shared/ipUtils.js";
 
@@ -39,9 +40,11 @@ const getInternalBypassHosts = () => {
 
 	const hosts = [];
 
-	try {
-		hosts.push(new URL(__BACKEND_URL__).hostname);
-	} catch {}
+	for (const backendUrl of BACKEND_URLS) {
+		try {
+			hosts.push(new URL(backendUrl).hostname);
+		} catch {}
+	}
 
 	try {
 		hosts.push(new URL(__CONSOLE_URL__).hostname);
